@@ -1,0 +1,21 @@
+# o que é seu e não vai para o repositório
+config.json
+dados/
+missoes/
+memoria/*
+!memoria/sobre_mim.exemplo.md
+modelos/meus/
+
+# rascunhos, histórico e anotações de quem desenvolve
+_versoes anteriores/
+referencias/
+ligar_pc/
+/LEIA-ME.md
+/AUDITORIA*.md
+/PLANO*.md
+
+# Python
+__pycache__/
+*.pyc
+.venv/
+venv/

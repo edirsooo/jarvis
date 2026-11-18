@@ -1,0 +1,4 @@
+- Escreva aqui, em poucas linhas, quem é você e como trabalha (copie este arquivo como `sobre_mim.md`, nesta pasta).
+- Exemplo: "Designer e editor de vídeo. Clientes: uma academia e uma clínica."
+- Exemplo: "Gosto de respostas curtas. Nunca apagar arquivo: mover para a pasta LIXEIRA."
+- Exemplo: "Projetos em andamento: a loja virtual e o aplicativo de agenda."

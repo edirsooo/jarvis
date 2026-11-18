@@ -1,0 +1,130 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Jarvis</title>
+<link rel="icon" href="icone.png">
+<link rel="stylesheet" href="estilo.css">
+</head>
+<body>
+<div id="app" class="parado">
+  <header>
+    <div class="marca"><span class="cubo"></span><b id="nome">JARVIS</b><small>by prestes design</small></div>
+    <nav id="vistas">
+      <button id="vPainel" class="ativa">PAINEL</button>
+      <button id="vEntregas">ENTREGAS <span id="qtdEntregas"></span></button>
+      <button id="vProcessos" title="Roteiros prontos: prospecção, site, relatório... Rodar, editar e criar">PROCESSOS</button>
+      <button id="vConversas" title="Conversas do Claude Code e projetos, por número, para pedir por voz">CONVERSAS</button>
+    </nav>
+    <!-- o que está valendo agora, à vista e trocável com um clique -->
+    <div id="etiquetas">
+      <button id="chCerebro" title="Quem conversa com você. Clique para trocar: automático, local (no PC) ou Claude">🧠 —</button>
+      <button id="chEscuta" title="Conversa aberta (fala sem repetir o nome) ou só pelo nome (com gente na sala). Clique para trocar">👂 —</button>
+      <span id="chCota" title="Cota mais apertada das assinaturas"></span>
+    </div>
+    <div class="topo-botoes">
+      <button id="btVisual" title="Roupa do mago, tema da tela e tamanho">🧙 Visual</button>
+      <button id="btMini" title="Vira só a esfera flutuando por cima, que desvia do mouse">Mini</button>
+      <button id="btZerar" title="Recomeça a conversa do zero">Do zero</button>
+      <button id="btParar" class="perigo" title="Interrompe todas as missões">Parar tudo</button>
+    </div>
+  </header>
+
+  <div id="corpo">
+    <!-- a esfera: palco inteiro quando parado, coluna à esquerda quando há trabalho -->
+    <section id="palco" title="Clique no orbe para acordar (ou calar). Clique no chão e o mago vai até lá.">
+      <canvas id="esfera"></canvas>
+      <div id="rotulo">
+        <div id="estado">DORMINDO</div>
+        <div id="saudacao"><b></b><span>Diga “Jarvis” para começar.</span></div>
+        <div id="legenda"></div>
+        <div id="ultima"></div>
+      </div>
+    </section>
+
+    <!-- parado: o que há para ver -->
+    <aside id="lado">
+      <div class="bloco" id="agora">
+        <h2>AGORA</h2>
+        <b>Nenhuma missão em andamento</b>
+        <p>O trabalho aparece aqui assim que começar.</p>
+      </div>
+      <div class="bloco" id="ultimasBloco">
+        <h2>ÚLTIMAS ENTREGAS</h2>
+        <div id="ultimas"></div>
+        <p id="semEntregas">Nada entregue ainda. Peça: “Claude, cria um site…” ou “Codex, gera uma imagem…”.</p>
+      </div>
+      <div class="bloco" id="assin">
+        <h2>ASSINATURAS <span id="cotasLido"></span><span class="xp" title="XP ganho em missões concluídas"><b id="nivel">NV 1</b> · <span id="xptxt">0 XP</span></span></h2>
+        <div id="cotas"><div class="cota-vazia">Lendo as cotas…</div></div>
+      </div>
+    </aside>
+
+    <!-- trabalhando: as telas dos agentes tomam o palco -->
+    <section id="grade"></section>
+
+    <!-- aba ENTREGAS: histórico de missões e resultados, com busca e filtro por tipo -->
+    <section id="galeria" hidden>
+      <div id="galTopo">
+        <input id="galBusca" placeholder="Buscar entrega pelo assunto (academias, site, relatório...)" autocomplete="off">
+        <div id="galFiltros"></div>
+      </div>
+      <div id="galLista"></div>
+    </section>
+
+    <!-- aba PROCESSOS: roteiros prontos para rodar, editar e criar -->
+    <section id="processos" hidden>
+      <div class="aba-topo"><h1>Processos</h1><p>Roteiros prontos. Por voz: “Jarvis, prospecção de dentistas em Sorocaba”. Aqui você roda, edita e cria.</p>
+        <button id="procNovo" class="bt forte">+ Novo processo</button></div>
+      <div id="procLista"></div>
+      <div id="procAgenda"></div>
+    </section>
+
+    <!-- aba CONVERSAS: conversas do Claude Code, projetos e planilhas de leads, com número para falar -->
+    <section id="conversas" hidden>
+      <div class="aba-topo"><h1>Conversas e projetos</h1><p>Cada conversa do Claude Code tem um número fixo. Por voz: “na conversa 7, pede para continuar”. O Jarvis segue numa cópia dela e mostra o resultado aqui.</p></div>
+      <div id="convGrade">
+        <div><h2 class="rot">CONVERSAS DO CLAUDE CODE</h2><div id="convLista"></div></div>
+        <div><h2 class="rot">PROJETOS</h2><div id="projLista"></div><h2 class="rot" style="margin-top:22px">PLANILHAS DE LEADS</h2><div id="leadsLista"></div></div>
+      </div>
+    </section>
+  </div>
+
+  <!-- janela de editar ou rodar um processo -->
+  <div id="procJanela" hidden></div>
+
+  <!-- trilho: entregas recentes e cotas resumidas, quando o palco está ocupado -->
+  <div id="trilho">
+    <span class="rot">ENTREGAS RECENTES</span>
+    <div id="trilhoItens"></div>
+    <div id="trilhoCotas"></div>
+  </div>
+
+  <footer>
+    <button id="mic" title="Liga e desliga o microfone (ESPAÇO)">●</button>
+    <span id="rodape">Conectando…</span>
+    <form id="form"><input id="campo" placeholder="Escreva um pedido ou fale com o Jarvis" autocomplete="off"></form>
+    <span id="info"></span>
+  </footer>
+
+  <div id="painel" hidden>
+    <div class="p-topo">
+      <span class="p-selo"></span>
+      <b class="p-titulo"></b>
+      <span class="p-tipo"></span>
+      <button class="p-pasta" title="Abrir a pasta da missão">Abrir pasta</button>
+      <button class="p-ajuste" title="Pedir um ajuste nesta missão, por texto">Pedir ajuste</button>
+      <button class="p-fechar" title="Fechar (Esc)">Fechar ✕</button>
+    </div>
+    <nav class="p-abas"></nav>
+    <div class="p-corpo"></div>
+  </div>
+
+  <div id="avisos"></div>
+  <div id="entrada" hidden><button id="btEntrar">▶ Ligar o Jarvis</button><p>Um clique libera o som nesta janela.</p></div>
+</div>
+<script src="app.js"></script>
+<script src="mago.js"></script>
+</body>
+</html>
