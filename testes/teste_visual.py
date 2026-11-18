@@ -75,6 +75,22 @@ try:
         for tm in ("cristal", "rpg", "grimorio"):
             pg.evaluate(f"() => MAGO.aplica({{tema: '{tm}'}})"); pg.wait_for_timeout(500)
             pg.screenshot(path=os.path.join(FOTOS, f"tema_{tm}.png"))
+        # as cores mudam de verdade: borda da caixa de diálogo, cenário e cor de destaque
+        borda = lambda: pg.evaluate("() => getComputedStyle(document.getElementById('saudacao')).borderTopColor")
+        pixel = lambda: pg.evaluate("() => { const c = document.getElementById('cenario'), d = c.getContext('2d').getImageData(c.width*.15|0, c.height*.15|0, 1, 1).data; return [d[0], d[1], d[2]]; }")
+        pg.evaluate("() => MAGO.aplica({tema: 'abismo'})"); pg.wait_for_timeout(700); b1, p1 = borda(), pixel()
+        pg.evaluate("() => MAGO.aplica({tema: 'cristal'})"); pg.wait_for_timeout(700); b2, p2 = borda(), pixel()
+        confere("trocar o tema muda a caixa de diálogo", b1 != b2, f"{b1} -> {b2}")
+        confere("trocar o tema muda o tom do cenário", p1 != p2, f"{p1} -> {p2}")
+        pg.evaluate("() => MAGO.aplica({tema: 'abismo', cor: '#58c48d'})"); pg.wait_for_timeout(700)
+        cor = pg.evaluate("() => getComputedStyle(document.getElementById('app')).getPropertyValue('--laranja').trim()")
+        confere("cor de destaque vale por cima do tema", cor == "#58c48d", cor)
+        pg.click("#btVisual"); pg.wait_for_timeout(400)
+        confere("menu tem as cores de destaque e a cor livre", pg.locator("#visual [data-cor]").count() >= 7 and pg.locator("#visual input[type=color]").count() == 1)
+        pg.screenshot(path=os.path.join(FOTOS, "cor_esmeralda.png")); pg.keyboard.press("Escape")
+        time.sleep(0.5)
+        confere("cor guardada no servidor", get("/api/visual").get("cor") == "#58c48d")
+        pg.evaluate("() => MAGO.aplica({cor: ''})"); pg.wait_for_timeout(300)
         pg.evaluate("() => MAGO.aplica({tema: 'abismo', roupa: 'torre'})"); pg.wait_for_timeout(400)
         # com missão: palco vira coluna, cenário acompanha
         urllib.request.urlopen(urllib.request.Request(BASE + "/api/texto", data=json.dumps({"texto": "Faz a prospecção de academias em Valinhos."}).encode(), headers={"Content-Type": "application/json"}), timeout=5)

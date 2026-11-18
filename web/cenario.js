@@ -189,7 +189,7 @@
   // ----- partículas -----
   function nova(tipo, inicio) {
     const p = { tipo, x: Math.random() * W, y: inicio ? Math.random() * H : H * (0.75 + Math.random() * 0.2), v: 0, vida: Math.random(), fase: Math.random() * 6.28 };
-    const cena = CENAS[chave] || {};
+    const cena = CENAS[chave.split('|')[0]] || {};
     if (tipo === 'brasa' && cena.tochas && cena.tochas.length) { const t = cena.tochas[(Math.random() * cena.tochas.length) | 0]; p.x = t[0] * W; p.y = t[1] * H - 10 * dpr; }
     p.v = { graca: 0.12, brasa: 0.55, vagalume: 0.05, runa: 0.18 }[tipo] * (0.6 + Math.random() * 0.8) * dpr * 60;
     return p;
@@ -222,7 +222,7 @@
     const b = palco.getBoundingClientRect();
     dpr = devicePixelRatio || 1; W = Math.max(1, b.width * dpr | 0); H = Math.max(1, b.height * dpr | 0);
     cv.width = W; cv.height = H; folga = 12 * dpr;
-    const cena = CENAS[chave];
+    const cena = CENAS[chave.split('|')[0]];
     longe = perto = null; parts = [];
     if (!cena || !cena.longe) return;
     const u = Math.max(2, H / 120);
@@ -230,6 +230,12 @@
     const cl = longe.getContext('2d'); cl.translate(folga, 0); cena.longe(cl, W, H, u, semente(7));
     perto = document.createElement('canvas'); perto.width = W; perto.height = H;
     cena.perto(perto.getContext('2d'), W, H, u, semente(11));
+    // a tinta do tema (e da cor de destaque) muda o tom do cenário sem mexer no claro e escuro dele
+    const tinta = getComputedStyle(app).getPropertyValue('--tinta').trim();
+    if (tinta && tinta !== 'transparent') [longe, perto].forEach((cvs) => {
+      const c = cvs.getContext('2d'); c.save(); c.setTransform(1, 0, 0, 1, 0, 0); c.globalCompositeOperation = 'source-atop';
+      c.globalAlpha = 0.22; c.fillStyle = tinta; c.fillRect(0, 0, cvs.width, cvs.height); c.restore();
+    });
     if (cena.parte) for (let i = 0; i < cena.parte.n; i++) parts.push(nova(cena.parte.tipo, true));
   }
   function tocha(x, y, t, k, i) {
@@ -250,10 +256,10 @@
     const alvo = calmo ? 1 : !document.hasFocus() ? 12 : 30;
     if (agora - tAnt < 1000 / alvo - 3) return;
     const dt = Math.min(0.1, (agora - tAnt) / 1000); tAnt = agora;
-    const nomeAgora = app.dataset.cenario || 'ruinas';
+    const nomeAgora = (app.dataset.cenario || 'ruinas') + '|' + (app.dataset.tema || '') + '|' + (app.style.getPropertyValue('--tinta') || '');
     const b = palco.getBoundingClientRect();
     if (nomeAgora !== chave || Math.abs(b.width * (devicePixelRatio || 1) - W) > 2 || Math.abs(b.height * (devicePixelRatio || 1) - H) > 2) { chave = nomeAgora; monta(); }
-    const cena = CENAS[chave] || {}, t = agora / 1000;
+    const cena = CENAS[chave.split('|')[0]] || {}, t = agora / 1000;
     g.clearRect(0, 0, W, H);
     if (!longe) return;
     mouse.x += (mouse.alvo - mouse.x) * 0.06;

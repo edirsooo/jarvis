@@ -415,8 +415,8 @@ footer{min-width:0;overflow:hidden;display:flex;align-items:center;gap:16px;padd
    Universo de fantasia (18/11): cenário em camadas, caixa de diálogo de RPG e o tema Abismo.
    Componentes valem para todos os temas; cada tema só troca as variáveis.
    ===================================================================== */
-:root{--serif:"Palatino Linotype","Book Antiqua",Palatino,Georgia,serif;--ouro:var(--laranja);
-  --dlg-fundo:linear-gradient(#0f0d0cf0,#17120ff0);--dlg-borda:var(--ouro);--dlg-texto:var(--texto)}
+:root{--serif:"Palatino Linotype","Book Antiqua",Palatino,Georgia,serif}
+#app{--ouro:var(--laranja);--dlg-fundo:linear-gradient(#0f0d0cf0,#17120ff0);--dlg-borda:var(--ouro);--dlg-texto:var(--texto);--tinta:transparent}
 #cenario{position:absolute;inset:0;width:100%;height:100%;pointer-events:none;image-rendering:pixelated}
 #esfera{z-index:1}
 #rotulo{z-index:2}
@@ -449,7 +449,7 @@ footer{min-width:0;overflow:hidden;display:flex;align-items:center;gap:16px;padd
 #app[data-tema="abismo"] header{border-bottom:1px solid #6b5530;box-shadow:0 1px 0 #000,0 2px 0 #2a2119}
 #app[data-tema="abismo"] .marca b{font-family:var(--serif);font-weight:700;letter-spacing:.22em;color:#f3e3c3;text-shadow:0 0 18px #e0a24a40}
 #app[data-tema="abismo"] .marca small{font-family:var(--serif);font-style:italic;border-color:#4a3a2a}
-#app[data-tema="abismo"] .cubo{background:#e0a24a;box-shadow:0 0 12px #e0a24a,5px 5px 0 #6b4220;animation:brasa 2.4s ease-in-out infinite}
+#app[data-tema="abismo"] .cubo{background:var(--ouro);box-shadow:0 0 12px var(--ouro),5px 5px 0 color-mix(in srgb,var(--ouro) 45%,#000);animation:brasa 2.4s ease-in-out infinite}
 #app[data-tema="abismo"] #vistas button{font-family:var(--serif);font-weight:600;letter-spacing:.24em;font-size:15px;border-bottom:2px solid transparent;position:relative}
 #app[data-tema="abismo"] #vistas button.ativa{color:#f3e3c3;border-bottom-color:var(--ouro);text-shadow:0 0 14px #e0a24a80}
 #app[data-tema="abismo"] #vistas button.ativa::before{content:"◆";position:absolute;left:50%;bottom:-7px;transform:translateX(-50%);font-size:9px;color:var(--ouro)}
@@ -464,7 +464,7 @@ footer{min-width:0;overflow:hidden;display:flex;align-items:center;gap:16px;padd
 #app[data-tema="abismo"] #etiquetas button:hover,#app[data-tema="abismo"] .vis-temas button:hover,#app[data-tema="abismo"] .vis-roupas button:hover{
   border-color:var(--ouro);color:#f3e3c3;box-shadow:inset 0 1px 0 #ffffff18,inset 0 0 0 1px #00000080,0 0 16px #e0a24a38,0 2px 0 #000}
 #app[data-tema="abismo"] .bt.forte,#app[data-tema="abismo"] .pj .forte,#app[data-tema="abismo"] .proc-bt .rodar,#app[data-tema="abismo"] #galFiltros button.on{
-  background:linear-gradient(#e9b25a,#b9772c);border-color:#f3cf86;color:#1c1006;text-shadow:0 1px 0 #ffffff40;box-shadow:inset 0 1px 0 #fff6,0 0 14px #e0a24a40,0 2px 0 #000}
+  background:linear-gradient(color-mix(in srgb,var(--ouro) 85%,#fff),color-mix(in srgb,var(--ouro) 75%,#000));border-color:color-mix(in srgb,var(--ouro) 60%,#fff);color:#1c1006;text-shadow:0 1px 0 #ffffff40;box-shadow:inset 0 1px 0 #fff6,0 0 14px #e0a24a40,0 2px 0 #000}
 #app[data-tema="abismo"] .bt.forte:hover,#app[data-tema="abismo"] .proc-bt .rodar:hover{animation:brasaBt 1.4s ease-in-out infinite}
 #app[data-tema="abismo"] button.perigo{border-color:#7a3a30}
 #app[data-tema="abismo"] button.perigo:hover{background:linear-gradient(#5a1e18,#3a120e);color:#ffd8d0;border-color:#d0574a}
@@ -479,7 +479,7 @@ footer{min-width:0;overflow:hidden;display:flex;align-items:center;gap:16px;padd
 #app[data-tema="abismo"] .aba-topo h1,#app[data-tema="abismo"] .proc b,#app[data-tema="abismo"] .m-titulo,#app[data-tema="abismo"] .p-titulo{font-family:var(--serif);letter-spacing:.03em}
 #app[data-tema="abismo"] #campo{background:#0e0b09;border:1px solid #5a4730;font-family:var(--serif);font-size:17px;box-shadow:inset 0 2px 8px #000}
 #app[data-tema="abismo"] #campo:focus{border-color:var(--ouro);box-shadow:inset 0 2px 8px #000,0 0 14px #e0a24a30}
-#app[data-tema="abismo"] #mic{background:radial-gradient(#e9b25a,#9a5a20);border:1px solid #f3cf86;border-radius:50%;box-shadow:0 0 18px #e0a24a60}
+#app[data-tema="abismo"] #mic{background:radial-gradient(color-mix(in srgb,var(--ouro) 80%,#fff),color-mix(in srgb,var(--ouro) 60%,#000));border:1px solid color-mix(in srgb,var(--ouro) 60%,#fff);border-radius:50%;box-shadow:0 0 18px color-mix(in srgb,var(--ouro) 40%,transparent)}
 #app[data-tema="abismo"] .aviso{background:var(--dlg-fundo);border:1px solid var(--ouro);border-left:3px solid var(--ouro);box-shadow:0 0 0 2px #000a,0 10px 26px #000a;font-family:var(--serif)}
 #app[data-tema="abismo"] .aviso small{font-family:var(--serif);letter-spacing:.28em;color:var(--ouro)}
 #app[data-tema="abismo"] .aviso.erro{border-color:var(--vermelho)}
@@ -489,14 +489,22 @@ footer{min-width:0;overflow:hidden;display:flex;align-items:center;gap:16px;padd
 #app[data-tema="abismo"] ::-webkit-scrollbar{width:10px;height:10px}
 #app[data-tema="abismo"] ::-webkit-scrollbar-thumb{background:#3a2e24;border:2px solid #0b0908}
 #app[data-tema="abismo"] ::-webkit-scrollbar-track{background:#0b0908}
-@keyframes brasa{50%{background:#ffcb7a;box-shadow:0 0 20px #e0a24a,5px 5px 0 #6b4220}}
+@keyframes brasa{50%{background:color-mix(in srgb,var(--ouro) 60%,#fff);box-shadow:0 0 20px var(--ouro),5px 5px 0 color-mix(in srgb,var(--ouro) 45%,#000)}}
 @keyframes brasaBt{50%{box-shadow:inset 0 1px 0 #fff6,0 0 24px #e0a24a80,0 2px 0 #000}}
 
 /* temas antigos ganham a caixa de diálogo na cor deles */
-#app[data-tema="grimorio"]{--dlg-fundo:linear-gradient(#f6ecd2f2,#e9dab4f2);--dlg-borda:#8a6a3c;--dlg-texto:#2a1d10}
-#app[data-tema="cristal"]{--ouro:#9a7bff;--dlg-fundo:linear-gradient(#141030f0,#0c0a1ef0)}
-#app[data-tema="rpg"]{--ouro:#d8dcef;--dlg-fundo:linear-gradient(#1c2a6af2,#121c4af2)}
-#app[data-tema="torre"]{--ouro:#c9772b}
+#app[data-tema="grimorio"]{--dlg-fundo:linear-gradient(#f6ecd2f2,#e9dab4f2);--dlg-borda:#8a6a3c;--dlg-texto:#2a1d10;--tinta:#5fa56f}
+#app[data-tema="cristal"]{--ouro:#9a7bff;--dlg-fundo:linear-gradient(#141030f0,#0c0a1ef0);--tinta:#7a5cff}
+#app[data-tema="rpg"]{--ouro:#d8dcef;--dlg-fundo:linear-gradient(#1c2a6af2,#121c4af2);--tinta:#3f7bff}
+#app[data-tema="torre"]{--ouro:#c9772b;--dlg-fundo:linear-gradient(#1e140cf0,#140d08f0);--tinta:#c9772b}
+#app[data-tema="classico"]{--tinta:#ff6b1a}
+/* cor de destaque escolhida no menu: vale por cima do tema */
+#app[style*="--destaque"]{--laranja:var(--destaque);--ouro:var(--destaque)}
+.vis-cores{display:flex;flex-wrap:wrap;gap:8px;margin-bottom:12px;align-items:center}
+.vis-cores button{width:34px;height:34px;padding:0;border:2px solid #0008;box-shadow:inset 0 0 0 1px #fff3}
+.vis-cores button.on{outline:2px solid var(--texto);outline-offset:2px}
+.vis-cores label{display:flex;align-items:center;gap:8px;font-size:13px;color:var(--fraco);margin-left:6px;cursor:pointer}
+.vis-cores input[type=color]{width:34px;height:34px;padding:0;border:2px solid var(--borda);background:none;cursor:pointer}
 
 /* menu Aparência */
 .vis-cab{display:flex;align-items:baseline;gap:12px;margin:-2px 0 12px;padding-bottom:10px;border-bottom:1px solid var(--borda)}
