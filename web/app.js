@@ -401,7 +401,7 @@ function aviso(titulo, txt, aoClicar, erro) {
   a.className = 'aviso' + (erro ? ' erro' : '');
   a.innerHTML = `<small>${esc(titulo)}</small>${esc(txt)}`;
   a.onclick = () => { if (aoClicar) aoClicar(); a.remove(); };
-  $('#avisos').append(a); setTimeout(() => a.remove(), 9000);
+  $('#avisos').append(a); setTimeout(() => a.remove(), erro ? 15000 : 9000);
 }
 function avisar(velhas) {
   S.missoes.forEach(m => {
@@ -430,6 +430,7 @@ const ajuste = o => fetch('/api/ajuste', { method: 'POST', headers: { 'Content-T
 /* ---------- aba PROCESSOS ---------- */
 const api = (url, corpo) => fetch(url, corpo ? { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(corpo) } : undefined).then(r => r.json());
 function carregaProcessos() {
+  if (!(S.processos || []).length) $('#procLista').innerHTML = '<p class="gal-vazia">Carregando os processos…</p>';
   api('/api/processos').then(d => { S.processos = d.processos || []; S.agenda = d.agenda || []; S.projetos = d.projetos || []; telaProcessos(); })
     .catch(() => { $('#procLista').innerHTML = '<p class="gal-vazia">Não consegui ler os processos (o Jarvis precisa ser reaberto para esta aba funcionar).</p>'; });
 }
@@ -463,9 +464,10 @@ function janelaRodar(p) {
   j.querySelector('form').onsubmit = ev => {
     ev.preventDefault(); const f = new FormData(ev.target), pars = {};
     p.parametros.forEach(x => { const v = String(f.get(x.nome) || '').trim(); if (v) pars[x.nome] = v; });
+    const bt = ev.target.querySelector('button.forte'); if (bt) { if (bt.disabled) return; bt.disabled = true; }
     api('/api/processos', { rodar: p.id, parametros: pars, pedido: f.get('_pedido') || '', projeto: f.get('_projeto') || '' }).then(r => {
       if (r.ok) { fechaJanela(); vista('painel'); SONS.missao(); } else aviso('NÃO COMEÇOU', r.erro || 'erro', null, true);
-    });
+    }).catch(() => aviso('NÃO COMEÇOU', 'Sem ligação com o Jarvis.', null, true)).finally(() => { if (bt) bt.disabled = false; });
   };
   const prim = j.querySelector('input'); if (prim) prim.focus();
 }
@@ -486,7 +488,9 @@ function janelaEditar(p) {
   j.querySelector('.x').onclick = fechaJanela;
   j.querySelector('form').onsubmit = ev => {
     ev.preventDefault(); const o = Object.fromEntries(new FormData(ev.target)); o.id = p.id || '';
-    api('/api/processos', o).then(r => { if (r.ok) { fechaJanela(); carregaProcessos(); SONS.pronto(); } else aviso('NÃO SALVOU', r.erro || 'erro', null, true); });
+    const bt = ev.target.querySelector('button.forte'); if (bt) { if (bt.disabled) return; bt.disabled = true; }
+    api('/api/processos', o).then(r => { if (r.ok) { fechaJanela(); carregaProcessos(); SONS.pronto(); } else aviso('NÃO SALVOU', r.erro || 'erro', null, true); })
+      .catch(() => aviso('NÃO SALVOU', 'Sem ligação com o Jarvis.', null, true)).finally(() => { if (bt) bt.disabled = false; });
   };
 }
 
@@ -541,7 +545,7 @@ function painel(soAtualiza) {
     b.onclick = () => { S.painel.entrega = x.id; painel(); SONS.clique(); };
     nav.append(b);
   });
-  const mod = atual.e ? atual.e.mod : atual.id === '@atividade' ? m.log.length : atual.id === '@telas' ? m.telas.length : (a.mod + d.mod);
+  const mod = atual.e ? atual.e.mod : atual.id === '@atividade' ? m.log.length + ':' + ((m.log[m.log.length - 1] || {}).t || 0) : atual.id === '@telas' ? m.telas.length + ':' + ((m.telas[m.telas.length - 1] || {}).mod || 0) : (a.mod + d.mod);
   const chave = `${m.n}|${atual.id}|${mod}`;
   if (chave === painelChave) return;
   painelChave = chave;
@@ -568,7 +572,11 @@ function painel(soAtualiza) {
     corpo.append(et, w); corpo.scrollTop = 0;
   } else {
     const e = atual.e;
-    if (e.tipo === 'site' || e.tipo === 'pdf') { const f = document.createElement('iframe'); f.src = url(e); corpo.append(f); }
+    if (e.tipo === 'site' || e.tipo === 'pdf') {
+      const f = document.createElement('iframe');
+      if (e.tipo === 'site') f.sandbox = 'allow-scripts allow-forms allow-popups allow-modals';   // sem acesso ao painel
+      f.src = url(e); corpo.append(f);
+    }
     else if (e.tipo === 'imagem') { const i = new Image(); i.className = 'cheia'; i.src = url(e); corpo.append(i); }
     else if (e.tipo === 'video') { const v = document.createElement('video'); v.src = url(e); v.controls = true; v.autoplay = true; corpo.append(v); }
     else if (e.tipo === 'audio') { const v = document.createElement('audio'); v.src = url(e); v.controls = true; v.style.margin = '30px'; corpo.append(v); }
@@ -609,7 +617,13 @@ $('#palco').addEventListener('pointermove', ev => {
 $('#palco').addEventListener('pointerleave', () => { MOUSE.dentro = false; MOUSE.x = MOUSE.y = -9999; });
 V.olhaX = 0; V.olhaY = 0;
 let tAnt = performance.now();
+function fpsAlvo() {
+  if (!document.hasFocus()) return 15;
+  const e = S.mudo ? 'mudo' : estadoVisual();
+  return (e === 'dormindo' || e === 'mudo') && !MOUSE.dentro ? 30 : 60;
+}
 function quadro(agora) {
+  if (agora - tAnt < 1000 / fpsAlvo() - 3) { requestAnimationFrame(quadro); return; }
   const dt = Math.min(.05, (agora - tAnt) / 1000); tAnt = agora;
   const e = S.mudo ? 'mudo' : estadoVisual(), alvo = ALVO[e], pal = PALETA[e], k = 1 - Math.pow(.02, dt);
   for (const c of ['vel', 'amp', 'raio', 'espalha']) V[c] += (alvo[c] - V[c]) * k;
@@ -672,7 +686,11 @@ function quadro(agora) {
 }
 
 /* ---------- teclado e cliques ---------- */
-$('#form').onsubmit = e => { e.preventDefault(); const c = $('#campo'); if (c.value.trim()) { audio(); manda({ t: 'texto', v: c.value.trim() }); c.value = ''; } };
+$('#form').onsubmit = e => {
+  e.preventDefault(); const c = $('#campo'); if (!c.value.trim()) return;
+  if (!S.conectado) { aviso('SEM LIGAÇÃO', 'O Jarvis está reconectando. O texto ficou no campo: envie de novo em instantes.', null, true); return; }
+  audio(); manda({ t: 'texto', v: c.value.trim() }); c.value = '';
+};
 addEventListener('keydown', e => {
   if (e.key === 'Escape') { if (!$('#procJanela').hidden) fechaJanela(); else if (S.painel) manda({ t: 'fechar' }); else vista('painel'); if (document.activeElement) document.activeElement.blur(); return; }
   if (e.code === 'Space' && !/^(INPUT|TEXTAREA|SELECT)$/.test((document.activeElement || {}).tagName || '')) { e.preventDefault(); audio(); manda({ t: 'mudo', v: !S.mudo }); SONS.clique(); }
@@ -686,7 +704,9 @@ function orbeTela() {
 $('#palco').onclick = ev => {
   const o = orbeTela();
   if (window.MAGO && o && Math.hypot(ev.clientX - o.x, ev.clientY - o.y) > o.r) return;   // fora do orbe: é o mago quem responde
-  audio(); if (S.estado === 'falando') manda({ t: 'calar' }); else manda({ t: 'acordar' });
+  audio(); SONS.clique(); cv.classList.remove('pulso'); void cv.offsetWidth; cv.classList.add('pulso');
+  if (S.mudo) { aviso('MICROFONE DESLIGADO', 'Aperte ESPAÇO ou o botão ● para ele ouvir.', null, true); return; }
+  if (S.estado === 'falando') manda({ t: 'calar' }); else manda({ t: 'acordar' });
 };
 $('#btMini').onclick = () => manda({ t: 'janela', modo: 'mini' });
 $('#vPainel').onclick = () => { vista('painel'); SONS.clique(); };
@@ -694,12 +714,23 @@ $('#vEntregas').onclick = () => { if (S.painel) manda({ t: 'fechar' }); vista('e
 $('#vProcessos').onclick = () => { if (S.painel) manda({ t: 'fechar' }); vista('processos'); SONS.clique(); };
 $('#vConversas').onclick = () => { if (S.painel) manda({ t: 'fechar' }); vista('conversas'); SONS.clique(); };
 $('#procNovo').onclick = () => janelaEditar({ id: '', nome: '', parametros: [], agente: 'claude', nivel: 'medio' });
-$('#galBusca').oninput = ev => { GAL.busca = ev.target.value; galeria(); };
+let galEspera = 0;
+$('#galBusca').oninput = ev => { GAL.busca = ev.target.value; clearTimeout(galEspera); galEspera = setTimeout(galeria, 180); };
 $('#chCerebro').onclick = () => { const m = (S.info || {}).cerebro_modo || 'auto'; ajuste({ cerebro: m === 'auto' ? 'local' : m === 'local' ? 'claude' : 'auto' }); SONS.clique(); };
 $('#chEscuta').onclick = () => { ajuste({ escuta: (S.info || {}).escuta === 'nome' ? 'aberta' : 'nome' }); SONS.clique(); };
 $('#mic').onclick = () => { audio(); manda({ t: 'mudo', v: !S.mudo }); SONS.clique(); };
 new ResizeObserver(() => tamanho()).observe(cv);
-$('#btParar').onclick =() => { manda({ t: 'parar', v: 'todas' }); manda({ t: 'calar' }); SONS.erro(); };
+let pararArmado = 0;
+$('#btParar').onclick = () => {
+  const b = $('#btParar');
+  if (Date.now() - pararArmado > 3000) {      // primeiro clique só arma: missão longa não morre por um clique perdido
+    pararArmado = Date.now(); b.classList.add('armado'); b.textContent = 'Confirmar?'; SONS.clique();
+    setTimeout(() => { if (Date.now() - pararArmado >= 3000) { b.classList.remove('armado'); b.textContent = 'Parar tudo'; } }, 3100);
+    return;
+  }
+  pararArmado = 0; b.classList.remove('armado'); b.textContent = 'Parar tudo';
+  manda({ t: 'parar', v: 'todas' }); manda({ t: 'calar' }); SONS.erro();
+};
 $('#btZerar').onclick = () => { manda({ t: 'zerar' }); legenda(''); $('#ultima').textContent = ''; };
 $('#painel .p-fechar').onclick = () => manda({ t: 'fechar' });
 $('#btEntrar').onclick = () => { audio(); $('#entrada').hidden = true; SONS.acordar(); tocarProxima(); };

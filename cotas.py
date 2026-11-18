@@ -1,5 +1,6 @@
 """Cotas das assinaturas, lidas do próprio computador (arquivos que o Claude Code, o aplicativo do Claude e o Codex já gravam). Nada é enviado para fora."""
 import asyncio, datetime, glob, json, os, shutil, time
+import configuracao
 
 
 def _janela(nome, usado, renova=None, fonte=""):
@@ -117,13 +118,10 @@ async def codex():
     if not exe:
         return {"nome": "Codex", "erro": "Codex não encontrado", "janelas": [], "lido": None}
     args = ["app-server", "--stdio"]
-    if exe.lower().endswith((".cmd", ".bat")):
-        args = ["/c", exe] + args
-        exe = os.environ.get("COMSPEC", "cmd.exe")
     proc = None
     try:
-        proc = await asyncio.create_subprocess_exec(
-            exe, *args, stdin=asyncio.subprocess.PIPE, stdout=asyncio.subprocess.PIPE,
+        proc = await configuracao.abrir_programa(
+            exe, args, stdin=asyncio.subprocess.PIPE, stdout=asyncio.subprocess.PIPE,
             stderr=asyncio.subprocess.DEVNULL, creationflags=0x08000000, limit=8 * 1024 * 1024)
 
         async def manda(o):
@@ -172,11 +170,7 @@ async def codex():
     except Exception as e:
         return {"nome": "Codex", "erro": f"não consegui ler ({type(e).__name__})", "janelas": [], "lido": None}
     finally:
-        if proc and proc.returncode is None:
-            try:
-                proc.kill()
-            except Exception:
-                pass
+        await configuracao.encerrar(proc)      # a árvore inteira: cmd.exe, node e o codex app-server
 
 
 async def ler(cfg):

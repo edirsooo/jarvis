@@ -1,4 +1,4 @@
-"""Janelas do Jarvis no Windows: a grande (painel) e a mini, que fica por cima de tudo e foge do mouse."""
+"""Janelas do Jarvis no Windows: a grande (painel) e a mini, que fica por cima de tudo, num canto (foge do mouse só no modo "livre")."""
 import ctypes, os, subprocess, threading, time, webbrowser
 from ctypes import wintypes
 
@@ -155,7 +155,7 @@ def _pythonw():
 
 
 def abrir_mini(canto=None):
-    """Esfera flutuante nativa (mini.py): sem moldura, sempre por cima, desvia do mouse."""
+    """Esfera flutuante nativa (mini.py): sem moldura, sempre por cima, num canto."""
     global _proc, _canto, _fixo
     if canto:
         _canto, _fixo = canto, True

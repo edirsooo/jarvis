@@ -87,38 +87,65 @@ def projetos_para_o_cerebro():
 FORA = ("jarvis-missoes", "jarvis-dados-cerebro", "scratch-workspaces", "appdata-local-temp", "-teste-")
 
 
+_CABECAS = {}      # arquivo -> ((mtime, tamanho), (título, pasta, última pergunta)): só relê o que mudou
+
+
+def _varrer_linhas(linhas, titulo="", pasta="", ultimo=""):
+    for l in linhas:
+        marcas = ('"custom-title"' in l, '"last-prompt"' in l, '"relocated"' in l)
+        # quase toda linha tem "cwd": só vale abrir o JSON dela enquanto a pasta não apareceu (linhas de ferramenta chegam a MB)
+        if not any(marcas) and (pasta or '"cwd"' not in l):
+            continue
+        try:
+            d = json.loads(l)
+        except Exception:
+            continue
+        t = d.get("type")
+        if t == "custom-title" and d.get("customTitle"):
+            titulo = str(d["customTitle"])
+        elif t == "last-prompt" and d.get("lastPrompt"):
+            ultimo = str(d["lastPrompt"])
+        elif t == "relocated" and d.get("relocatedCwd"):
+            pasta = str(d["relocatedCwd"])
+        elif d.get("cwd") and not pasta:
+            pasta = str(d["cwd"])
+    return titulo, pasta, ultimo
+
+
 def _cabeca(arq, limite=400):
-    """Título, pasta e última pergunta de uma sessão, lendo só o começo e o fim do arquivo."""
+    """Título, pasta e última pergunta de uma sessão, lendo só o começo e o fim do arquivo.
+    Fica guardado por arquivo: sem mudança não relê; a conversa que está crescendo relê só o fim."""
+    try:
+        st = os.stat(arq)
+    except OSError:
+        return "", "", ""
+    chave = (st.st_mtime_ns, st.st_size)
+    guardado = _CABECAS.get(arq)
+    if guardado and guardado[0] == chave:
+        return guardado[1]
     titulo = pasta = ultimo = ""
     try:
-        tam = os.path.getsize(arq)
         with open(arq, encoding="utf-8", errors="replace") as f:
-            linhas = []
-            for i, l in enumerate(f):
-                linhas.append(l)
-                if i >= limite:
-                    break
-            if tam > 400_000:
-                f.seek(max(0, tam - 200_000))
+            if guardado and guardado[1][1] and st.st_size >= guardado[0][1]:
+                # já conhecida e só cresceu: o começo não mudou; lê só o que entrou no fim
+                titulo, pasta, ultimo = guardado[1]
+                f.seek(max(0, guardado[0][1] - 1, st.st_size - 200_000))
                 f.readline()
-                linhas += f.readlines()[-300:]
-        for l in linhas:
-            if '"custom-title"' in l or '"cwd"' in l or '"last-prompt"' in l or '"relocated"' in l:
-                try:
-                    d = json.loads(l)
-                except Exception:
-                    continue
-                t = d.get("type")
-                if t == "custom-title" and d.get("customTitle"):
-                    titulo = str(d["customTitle"])
-                elif t == "last-prompt" and d.get("lastPrompt"):
-                    ultimo = str(d["lastPrompt"])
-                elif t == "relocated" and d.get("relocatedCwd"):
-                    pasta = str(d["relocatedCwd"])
-                elif d.get("cwd") and not pasta:
-                    pasta = str(d["cwd"])
+                titulo, pasta, ultimo = _varrer_linhas(f.readlines()[-300:], titulo, pasta, ultimo)
+            else:
+                linhas = []
+                for i, l in enumerate(f):
+                    linhas.append(l)
+                    if i >= limite:
+                        break
+                if st.st_size > 400_000:
+                    f.seek(max(0, st.st_size - 200_000))
+                    f.readline()
+                    linhas += f.readlines()[-300:]
+                titulo, pasta, ultimo = _varrer_linhas(linhas)
     except OSError:
         pass
+    _CABECAS[arq] = (chave, (titulo, pasta, ultimo))
     return titulo, pasta, ultimo
 
 
@@ -167,7 +194,18 @@ def conversa(numero):
     return next((c for c in conversas(max_itens=60, dias=90) if c["numero"] == numero), None)
 
 
-def conversas_para_o_cerebro(max_itens=8):
+_PARA_CEREBRO = [0.0, ""]      # (quando, texto): o cérebro recebe isto a cada fala; a lista não muda de segundo em segundo
+
+
+def conversas_para_o_cerebro(max_itens=8, validade_s=30):
+    if time.time() - _PARA_CEREBRO[0] < validade_s:
+        return _PARA_CEREBRO[1]
+    _PARA_CEREBRO[1] = _conversas_para_o_cerebro(max_itens)
+    _PARA_CEREBRO[0] = time.time()
+    return _PARA_CEREBRO[1]
+
+
+def _conversas_para_o_cerebro(max_itens=8):
     cs = conversas(max_itens=max_itens)
     if not cs:
         return ""

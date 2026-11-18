@@ -69,6 +69,8 @@ O instalador pergunta o seu nome, instala os pacotes, confere Claude Code, Codex
 - **"Para tudo"** interrompe as missões. **ESPAÇO** desliga e liga o microfone.
 - **"Fica só pelo nome"** quando tiver mais gente na sala. **"Não é contigo"** faz ele dormir na hora.
 - Também dá para escrever no campo de baixo do painel.
+- "O que diz o relatório das academias?" faz ele ler a entrega da missão e responder em poucas frases.
+- **Parar tudo** na tela pede um segundo clique para confirmar; por voz, "para tudo" para na hora.
 - Para ver erros na tela: `Abrir Jarvis (com erros na tela).bat`. Para abrir junto com o Windows: `Ligar com o Windows.bat`.
 - Fechar de verdade: botão direito no ícone ao lado do relógio, "Fechar o Jarvis".
 
@@ -117,6 +119,8 @@ Leia antes de usar:
 - As regras de toda missão proíbem apagar arquivo, enviar e-mail ou mensagem, publicar, comprar e instalar programas, e o Jarvis pede confirmação por voz antes de delegar algo assim. Isso é instrução para a IA, não uma trava técnica.
 - O processo "computador" mexe no mouse e no teclado à sua vista. Levar o mouse ao canto de cima à esquerda da tela para na hora.
 - O servidor só atende no próprio computador (`127.0.0.1`) e recusa pedidos vindos de outros sites abertos no navegador.
+- Os sites que as missões entregam abrem isolados no painel: rodam, mas não conseguem falar com o Jarvis (um texto copiado da web num site gerado não vira pedido).
+- "Abre tal arquivo" por voz não executa programa nem script (`.exe`, `.bat`, `.ps1`...): abre a pasta com o arquivo marcado.
 - **O que sai do computador:** o texto dos seus pedidos vai para a Anthropic e a OpenAI pelos programas deles (Claude Code e Codex), e o texto que ele fala vai para o serviço de voz do Edge (Microsoft). O áudio do microfone é transcrito no seu computador e não é enviado.
 - Cada missão gasta a cota das suas assinaturas. Processo agendado também.
 

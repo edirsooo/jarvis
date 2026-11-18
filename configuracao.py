@@ -46,3 +46,50 @@ def dono(cfg):
         return getpass.getuser().split(".")[0].capitalize() or "Usuário"
     except Exception:
         return "Usuário"
+
+
+_ESPECIAIS = set(' \t&|<>^()"')
+
+
+def _aspas(a):
+    """Um argumento para a linha do cmd.exe: entre aspas sempre que tiver espaço ou símbolo que o cmd interpreta."""
+    import subprocess
+    q = subprocess.list2cmdline([a])
+    if q.startswith('"') or '"' in a or not (set(a) & _ESPECIAIS):
+        return q
+    barras = len(a) - len(a.rstrip("\\"))      # barra no fim dobra, senão escaparia a aspa que fecha
+    return '"' + a + "\\" * barras + '"'
+
+
+async def abrir_programa(exe, args, **kw):
+    """Abre o Claude Code ou o Codex. No Windows eles são .cmd, que só rodam pelo cmd.exe: a linha vai inteira entre
+    aspas (cmd /c "...") e cada argumento com espaço, & ou parênteses vai entre aspas, para que um caminho como
+    E:\\P&D\\loja não vire dois comandos."""
+    import asyncio
+    if exe.lower().endswith((".cmd", ".bat")):
+        linha = " ".join(_aspas(x) for x in [exe] + list(args))
+        return await asyncio.create_subprocess_shell(linha, **kw)
+    return await asyncio.create_subprocess_exec(exe, *args, **kw)
+
+
+async def encerrar(proc):
+    """Encerra um processo e todos os filhos dele. Claude Code e Codex são .cmd: o proc é o cmd.exe, e um kill()
+    simples deixa o node e o agente vivos (em 18/11/2026, 77 'codex app-server' órfãos somavam 29 GB)."""
+    import asyncio
+    if not proc or proc.returncode is not None:
+        return
+    try:
+        if proc.stdin and not proc.stdin.is_closing():
+            proc.stdin.close()
+    except Exception:
+        pass
+    try:
+        k = await asyncio.create_subprocess_exec(
+            "taskkill", "/PID", str(proc.pid), "/T", "/F", creationflags=0x08000000,
+            stdout=asyncio.subprocess.DEVNULL, stderr=asyncio.subprocess.DEVNULL)
+        await asyncio.wait_for(k.wait(), 10)
+    except Exception:
+        try:
+            proc.kill()
+        except Exception:
+            pass

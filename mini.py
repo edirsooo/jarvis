@@ -1,4 +1,4 @@
-"""Esfera flutuante do Jarvis: janela sem moldura, sempre por cima, que desvia do mouse.
+"""Esfera flutuante do Jarvis: janela sem moldura, sempre por cima, quieta no canto (só desvia do mouse no modo "livre").
 
 - Chegar com o mouse perto: ela pula para o canto mais longe.
 - Segurar SHIFT e chegar perto: ela fica parada; arrastar move, clicar abre o painel inteiro.
@@ -44,7 +44,7 @@ def buscar():
             falhas += 1
             if falhas > 12:        # o Jarvis fechou: a esfera some junto
                 E["vivo"] = False
-        time.sleep(0.12)
+        time.sleep(0.5 if E.get("painel_frente") else 0.25)
 
 
 def chamar(caminho):
@@ -148,11 +148,13 @@ def main():
     v = {"cor1": [70, 78, 100], "cor2": [40, 44, 58], "vel": .15, "amp": .03, "raio": .74, "nivel": 0.0, "rot": 0.0, "t": time.time()}
     arr = {"x": 0, "y": 0, "moveu": False, "ativo": False}
 
+    class MI(ctypes.Structure):
+        _fields_ = [("cb", ctypes.c_ulong), ("m", ctypes.c_long * 4), ("w", ctypes.c_long * 4), ("f", ctypes.c_ulong)]
+
+    class PT(ctypes.Structure):
+        _fields_ = [("x", ctypes.c_long), ("y", ctypes.c_long)]
+
     def area():
-        class MI(ctypes.Structure):
-            _fields_ = [("cb", ctypes.c_ulong), ("m", ctypes.c_long * 4), ("w", ctypes.c_long * 4), ("f", ctypes.c_ulong)]
-        class PT(ctypes.Structure):
-            _fields_ = [("x", ctypes.c_long), ("y", ctypes.c_long)]
         p = PT()
         u32.GetCursorPos(ctypes.byref(p))
         u32.MonitorFromPoint.restype = ctypes.c_void_p
@@ -283,15 +285,21 @@ def main():
                 tela.itemconfig(it, state=est)
         estado_local["bot"] = "normal" if E["ativas"] else "hidden"
         cor = {"ouvindo": "#5ad7ff", "pensando": "#ffd23f", "falando": "#ff6b1a", "trabalhando": "#19c37d", "mudo": "#ff4d5e"}.get(e, "#8a90a0")
-        tela.itemconfig(rot, text="NO COMPUTADOR" if E.get("pc") and e == "trabalhando" else NOMES.get(e, e.upper()), fill=cor)
-        tela.itemconfig(placa, outline=cor)
+        txt_rot = "NO COMPUTADOR" if E.get("pc") and e == "trabalhando" else NOMES.get(e, e.upper())
+        if estado_local.get("placa") != (txt_rot, cor):
+            estado_local["placa"] = (txt_rot, cor)
+            tela.itemconfig(rot, text=txt_rot, fill=cor)
+            tela.itemconfig(placa, outline=cor)
         if e == "falando" and E["legenda"]:
             linha = E["legenda"]
         elif E["ativas"]:       # quem está trabalhando e o que está fazendo agora
             linha = f"{E.get('quem', '')}: {E.get('acao', '')}" + (f"  (+{E['ativas'] - 1})" if E["ativas"] > 1 else "")
         else:
             linha = 'Diga "Jarvis"' if e == "dormindo" else ""
-        tela.itemconfig(leg, text=linha[:74] + ("…" if len(linha) > 74 else ""))
+        linha = linha[:74] + ("…" if len(linha) > 74 else "")
+        if estado_local.get("leg") != linha:
+            estado_local["leg"] = linha
+            tela.itemconfig(leg, text=linha)
 
         # posição: canto pedido, ou foge do mouse
         try:
@@ -312,7 +320,7 @@ def main():
                 estado_local["canto"], estado_local["alvo"], estado_local["ult_fuga"] = melhor, pos(melhor, ar), agora
             al = estado_local["alvo"]
             if al and not arr["ativo"]:
-                nx, ny = wx + (al[0] - wx) * .28, wy + (al[1] - wy) * .28
+                nx, ny = wx + (al[0] - wx) * .45, wy + (al[1] - wy) * .45
                 if abs(al[0] - wx) < 3 and abs(al[1] - wy) < 3:
                     nx, ny = al
                     estado_local["alvo"] = None

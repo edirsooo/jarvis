@@ -29,6 +29,10 @@ async def main():
     FALSO = os.path.join(SAIDA, "falso")      # o Claude Code de mentira roda de uma pasta sem espaço nem "&" no caminho (o cmd não aceita)
     __import__("shutil").copytree(os.path.join(AQUI, "falso"), FALSO, dirs_exist_ok=True)
     amb["PATH"] = FALSO + os.pathsep + amb["PATH"]
+    exe = os.path.join(PASTA, "programa.bat")      # se a ação rápida executasse, ele criaria rodou.txt
+    with open(exe, "w") as f:
+        f.write("@echo rodou > \"" + os.path.join(PASTA, "rodou.txt") + "\"\n")
+    amb["FALSO_EXE"] = exe
     saida = open(os.path.join(PASTA, "servidor.log"), "w", encoding="utf-8")
     proc = subprocess.Popen([sys.executable, os.path.join(J, "jarvis.py"), "--sem-ouvido"], env=amb, cwd=PASTA, stdout=saida, stderr=subprocess.STDOUT)
     try:
@@ -66,6 +70,10 @@ async def main():
                 return next((m for m in e["missoes"] if m["n"] == n), None)
 
             def args_de(m):
+                for _ in range(20):      # o agente de mentira grava os argumentos logo depois de subir
+                    if os.path.exists(os.path.join(m["pasta"], "trabalho", "args.txt")):
+                        break
+                    time.sleep(0.3)
                 with open(os.path.join(m["pasta"], "trabalho", "args.txt"), encoding="utf-8") as f:
                     return [json.loads(l) for l in f if l.strip()]
 
@@ -127,6 +135,21 @@ async def main():
             await diz("Abre o site das academias.", 1)
             e = await ate(lambda e: bool(e["painel"]), 10)
             confere("abrir pelo assunto acha a missão certa", e["painel"] and e["painel"]["missao"] == m1["n"], str(e["painel"]))
+
+            # 3b. ler uma entrega: o cérebro recebe o texto do site e responde sobre ele
+            await diz("O que tem no site das academias?", 1)
+            e = await ate(lambda e: any(c["txt"].startswith("Li a página") for c in e["conversa"] if c["quem"] == "jarvis"), 15)
+            lidas = [c["txt"] for c in e["conversa"] if c["quem"] == "jarvis" and c["txt"].startswith("Li a página")]
+            confere("ler: o texto da entrega chega ao cérebro", lidas and lidas[-1] == "Li a página: tem o texto", lidas[-1:])
+            # 3c. "abrir" um programa não executa: só mostra a pasta
+            await diz("Abre o programa.", 2)
+            for _ in range(10):
+                log_srv = open(os.path.join(PASTA, "dados", "jarvis.log"), encoding="utf-8").read()
+                if "é executável" in log_srv:
+                    break
+                await asyncio.sleep(0.5)
+            confere("abrir um .bat não executa (abre só a pasta)", "é executável, abri só a pasta" in log_srv and not os.path.exists(os.path.join(PASTA, "rodou.txt")))
+            confere("o log registra as ações", "ações: ler entrega=site assunto=academias" in log_srv)
 
             # 4. recado pela tela (campo do cartão) e missão dentro de um projeto
             await diz("Na Loja, corrige o botão de vender.", 3)

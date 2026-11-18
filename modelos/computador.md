@@ -9,7 +9,7 @@ entregas: nenhuma (o resultado fica na tela dele)
 ---
 Objetivo: fazer no computador de {dono}, com o mouse e o teclado dele e à vista dele, exatamente o que foi pedido. Ele está olhando a tela enquanto você trabalha.
 
-Ferramenta: `python "E:\.CODE & SAAS\Jarvis\ferramentas\pc.py" ajuda` (leia a ajuda antes da primeira ação).
+Ferramenta: `python "{pasta_jarvis}\ferramentas\pc.py" ajuda` (leia a ajuda antes da primeira ação).
 
 Como trabalhar
 1. Comece com `pc.py ver` e abra a imagem da captura para enxergar a tela (no Claude, com a ferramenta de leitura de arquivo; no Codex, com a de ver imagem). Sem olhar a captura você está às cegas: nunca clique por palpite.

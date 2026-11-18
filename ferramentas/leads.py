@@ -1,7 +1,7 @@
 """Planilha de leads das prospecções do Jarvis: uma por nicho e cidade, guardada entre uma missão e outra.
 
 Serve para a prospecção andar em etapas e nunca repetir empresa: quem já foi visto fica com a situação anotada.
-Arquivo: E:\\.CODE & SAAS\\Jarvis\\dados\\leads\\<nicho>__<cidade>.csv (abre no Excel).
+Arquivo: <pasta do Jarvis>\\dados\\leads\\<nicho>__<cidade>.csv (abre no Excel).
 
 Uso:
   python leads.py ajuda

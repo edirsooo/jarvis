@@ -122,6 +122,24 @@ try:
         antes = pg.evaluate("() => !!MAGO.estado.ir")
         pg.click("#campo"); pg.wait_for_timeout(200)
         confere("clicar no campo de escrever não manda o mago", not antes and not pg.evaluate("() => !!MAGO.estado.ir"))
+        # Parar tudo: o primeiro clique só arma; o segundo, em até 3 s, para
+        pg.click("#btParar"); pg.wait_for_timeout(300)
+        armado = pg.inner_text("#btParar")
+        confere("Parar tudo: primeiro clique só pede confirmação", armado == "Confirmar?", armado)
+        pg.wait_for_timeout(3400)
+        confere("Parar tudo: a confirmação expira sozinha", pg.inner_text("#btParar") == "Parar tudo")
+        # clique no orbe com o microfone desligado: avisa em vez de ficar mudo
+        pg.evaluate("() => { S.mudo = true; }")
+        o = pg.evaluate("() => orbeTela()")
+        pg.mouse.click(o["x"], o["y"]); pg.wait_for_timeout(400)
+        confere("clique no orbe com microfone desligado avisa", "MICROFONE DESLIGADO" in pg.inner_text("#avisos"))
+        pg.evaluate("() => { S.mudo = false; }")
+        # sem ligação, o texto digitado fica no campo
+        pg.evaluate("() => { S.conectado = false; }")
+        pg.fill("#campo", "texto que não pode sumir"); pg.press("#campo", "Enter"); pg.wait_for_timeout(300)
+        confere("sem ligação, o texto digitado não some", pg.input_value("#campo") == "texto que não pode sumir")
+        pg.fill("#campo", ""); pg.evaluate("() => { S.conectado = true; }")
+        pg.screenshot(path=os.path.join(FOTOS, "10_avisos.png"))
         # notebook: nada estoura
         pg.set_viewport_size({"width": 1366, "height": 740}); pg.wait_for_timeout(800)
         pg.click("#vProcessos"); pg.wait_for_timeout(700)

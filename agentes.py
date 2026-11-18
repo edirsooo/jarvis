@@ -155,8 +155,10 @@ class Agentes:
             dados = [dict(m.publico(), sessao=m.sessao, instrucao=m.instrucao, modelo=m.modelo, params=m.params,
                           cwd=m.cwd, tempo_max=m.tempo_max, conversa=m.conversa)
                      for m in list(self.missoes.values())[-60:]]
-            with open(ARQ_MISSOES, "w", encoding="utf-8") as f:
+            tmp = ARQ_MISSOES + ".tmp"      # grava ao lado e troca: uma queda no meio não apaga o histórico
+            with open(tmp, "w", encoding="utf-8") as f:
                 json.dump(dados, f, ensure_ascii=False)
+            os.replace(tmp, ARQ_MISSOES)
         except Exception as e:
             self.log(f"não salvei as missões: {e}")
 
@@ -164,7 +166,15 @@ class Agentes:
         try:
             with open(ARQ_MISSOES, encoding="utf-8") as f:
                 dados = json.load(f)
-        except Exception:
+        except FileNotFoundError:
+            return
+        except Exception as e:      # arquivo estragado: guarda à parte (não some) e começa sem histórico
+            ruim = ARQ_MISSOES + time.strftime(".%Y%m%d-%H%M%S.estragado")
+            try:
+                os.replace(ARQ_MISSOES, ruim)
+            except OSError:
+                pass
+            self.log(f"missoes.json estragado ({e}); guardei em {os.path.basename(ruim)}")
             return
         for d in dados:
             if not os.path.isdir(d.get("pasta", "")):
@@ -283,16 +293,7 @@ class Agentes:
         return qtd
 
     async def _matar(self, proc):
-        try:
-            k = await asyncio.create_subprocess_exec(
-                "taskkill", "/PID", str(proc.pid), "/T", "/F", creationflags=0x08000000,
-                stdout=asyncio.subprocess.DEVNULL, stderr=asyncio.subprocess.DEVNULL)
-            await k.wait()
-        except Exception:
-            try:
-                proc.kill()
-            except Exception:
-                pass
+        await configuracao.encerrar(proc)
 
     # ---------- execução ----------
     def _comando(self, m, retomar):
@@ -341,9 +342,6 @@ class Agentes:
         ruim = [a for a in args if "\n" in a or "\r" in a]
         if ruim:        # nenhuma opção pode ter quebra de linha (ver o aviso acima): melhor falhar aqui do que rodar sem regras
             raise RuntimeError("opção com quebra de linha na linha de comando do agente")
-        if exe.lower().endswith((".cmd", ".bat")):
-            args = ["/c", exe] + args
-            exe = os.environ.get("COMSPEC", "cmd.exe")
         return exe, args
 
     async def _rodar(self, m, texto, retomar=False):
@@ -358,8 +356,8 @@ class Agentes:
             fora = bool(m.cwd and os.path.isdir(m.cwd))
             if m.agente == "codex":
                 texto = regras(m.pasta, m.cwd if fora else None, self.cfg) + "\n\n" + texto
-            m.proc = await asyncio.create_subprocess_exec(
-                exe, *args, cwd=m.cwd if fora else m.pasta, env=amb, limit=32 * 1024 * 1024,
+            m.proc = await configuracao.abrir_programa(
+                exe, args, cwd=m.cwd if fora else m.pasta, env=amb, limit=32 * 1024 * 1024,
                 stdin=asyncio.subprocess.PIPE, stdout=asyncio.subprocess.PIPE,
                 stderr=asyncio.subprocess.PIPE, creationflags=0x08000000)
             m.proc.stdin.write(texto.encode("utf-8"))
@@ -415,6 +413,7 @@ class Agentes:
                         m.resumo = " ".join(x for x in erro_txt[-3:] if x)[:300] or f"o {m.agente} saiu com código {cod}"
         except Exception as e:
             m.estado, m.etapa, m.resumo = "erro", "Deu erro", f"{type(e).__name__}: {e}"
+            await self._matar(m.proc)       # sem quem leia a saída dele, o agente travaria com o cano cheio
         m.fim = time.time()
         try:
             with open(os.path.join(m.pasta, "resultado.md"), "w", encoding="utf-8") as f:

@@ -100,13 +100,10 @@ class Cerebro:
                 "--include-partial-messages",
                 "--system-prompt-file", arq, "--tools", "", "--strict-mcp-config",
                 "--disable-slash-commands"]
-        if exe.lower().endswith((".cmd", ".bat")):
-            args = ["/c", exe] + args
-            exe = os.environ.get("COMSPEC", "cmd.exe")
         amb = dict(os.environ)
         amb.pop("ANTHROPIC_BASE_URL", None)
-        self.proc = await asyncio.create_subprocess_exec(
-            exe, *args, cwd=PASTA, env=amb, limit=8 * 1024 * 1024,
+        self.proc = await configuracao.abrir_programa(
+            exe, args, cwd=PASTA, env=amb, limit=8 * 1024 * 1024,
             stdin=asyncio.subprocess.PIPE, stdout=asyncio.subprocess.PIPE,
             stderr=asyncio.subprocess.DEVNULL, creationflags=0x08000000)
         self.log("cérebro: aberto")
@@ -168,11 +165,7 @@ class Cerebro:
         return {"fala": "Perdi o fio. Pode repetir?", "acoes": [], "erro": str(erro)}
 
     async def _fechar(self):
-        if self.proc and self.proc.returncode is None:
-            try:
-                self.proc.kill()
-            except Exception:
-                pass
+        await configuracao.encerrar(self.proc)
         self.proc = None
 
     async def reiniciar(self):

@@ -422,6 +422,7 @@
   }
   function quadro(now) {
     requestAnimationFrame(quadro);
+    if (!document.hasFocus() && now - ult < 1000 / 15 - 3) return;      // janela atrás de outra: 15 quadros por segundo
     const dt = Math.min(0.05, (now - ult) / 1000 || 0); ult = now;
     if (document.hidden || !ligado) return;
     // nas abas de lista (entregas, processos, conversas) ele sai de cena, para não ficar em cima do que se lê

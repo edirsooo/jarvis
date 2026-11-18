@@ -25,7 +25,9 @@ def cerebro():
         ub = ult.lower()
         time.sleep(float(os.environ.get("FALSO_PENSA", "0.6")))
         r = {"fala": "Estou aqui.", "acoes": []}
-        if "redigir a missão" in b or "redigir a missao" in b:
+        if "conteúdo da missão" in ub:      # o que a ação "ler" trouxe: responde se o texto da entrega chegou
+            r = {"fala": "Li a página: " + ("tem o texto" if ("Arquivo " in ult and "Resumo do aprendiz" in ult) else "sem o texto"), "acoes": []}
+        elif "redigir a missão" in b or "redigir a missao" in b:
             r = {"fala": "", "acoes": [{"tipo": "processo", "id": "prospeccao", "parametros": {"nicho": "academias", "cidade": "Valinhos, SP"},
                                         "pedido": "Prospecção de academias em Valinhos (redigida pelo Claude)", "titulo": "Prospecção redigida"}]}
         elif ub.startswith("[sistema] a missão") and "passou do tempo" in ub:
@@ -45,6 +47,10 @@ def cerebro():
         elif "na loja" in ub:
             r = {"fala": "Feito, já começou.", "acoes": [{"tipo": "processo", "id": "programar", "projeto": "Loja",
                                                           "parametros": {"tarefa": "corrigir o botão de vender"}, "pedido": "Corrigir o botão de vender", "titulo": "Botão de vender"}]}
+        elif "o que tem no site" in ub:
+            r = {"fala": "Lendo.", "acoes": [{"tipo": "ler", "assunto": "academias", "entrega": "site", "pergunta": "o que tem no site"}]}
+        elif "abre o programa" in ub:
+            r = {"fala": "Abrindo.", "acoes": [{"tipo": "rapida", "alvo": os.environ.get("FALSO_EXE", "")}]}
         elif "abre o site" in ub:
             r = {"fala": "Aqui está.", "acoes": [{"tipo": "abrir", "assunto": "academias", "entrega": "site"}]}
         elif "pelo nome" in ub:
