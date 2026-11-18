@@ -410,3 +410,105 @@ footer{min-width:0;overflow:hidden;display:flex;align-items:center;gap:16px;padd
 .perigo.armado{background:#d63b3b;border-color:#ff6b6b;color:#fff}
 #esfera.pulso{animation:pulso .28s ease-out}
 @keyframes pulso{0%{transform:scale(1)}40%{transform:scale(1.035)}100%{transform:scale(1)}}
+
+/* =====================================================================
+   Universo de fantasia (18/11): cenário em camadas, caixa de diálogo de RPG e o tema Abismo.
+   Componentes valem para todos os temas; cada tema só troca as variáveis.
+   ===================================================================== */
+:root{--serif:"Palatino Linotype","Book Antiqua",Palatino,Georgia,serif;--ouro:var(--laranja);
+  --dlg-fundo:linear-gradient(#0f0d0cf0,#17120ff0);--dlg-borda:var(--ouro);--dlg-texto:var(--texto)}
+#cenario{position:absolute;inset:0;width:100%;height:100%;pointer-events:none;image-rendering:pixelated}
+#esfera{z-index:1}
+#rotulo{z-index:2}
+
+/* caixa de diálogo: a saudação e a fala do Jarvis aparecem como num jogo de aventura */
+#saudacao{display:inline-block;position:relative;max-width:min(760px,92%);padding:22px 38px 22px;text-align:left;
+  background:var(--dlg-fundo);color:var(--dlg-texto);border:1px solid var(--dlg-borda);
+  box-shadow:0 0 0 3px #000000b0,0 0 0 4px color-mix(in srgb,var(--dlg-borda) 45%,transparent),0 14px 40px #000c;animation:dlgEntra .5s ease-out}
+#saudacao::before{content:"JARVIS · ESPÍRITO DO ORBE";position:absolute;top:-12px;left:26px;padding:4px 12px;background:#0a0807;border:1px solid var(--dlg-borda);
+  font:600 11px/1 var(--serif);letter-spacing:.32em;color:var(--dlg-borda)}
+#saudacao::after{content:"▼";position:absolute;right:16px;bottom:8px;font-size:11px;color:var(--dlg-borda);animation:dlgSeta 1.1s steps(2) infinite}
+#saudacao b{font-family:var(--serif);font-weight:600;font-size:clamp(24px,2.7vw,46px);letter-spacing:.01em;line-height:1.15}
+#saudacao span{color:color-mix(in srgb,var(--dlg-texto) 70%,transparent)!important;font-size:clamp(15px,1.3vw,22px)}
+#app:not(.trabalho) #legenda:not(:empty){display:inline-block;position:relative;max-width:min(860px,92%);padding:18px 30px;text-align:left;
+  background:var(--dlg-fundo);border:1px solid var(--dlg-borda);box-shadow:0 0 0 3px #000000b0,0 14px 40px #000c;font-family:var(--serif);font-weight:600}
+#estado{font-family:var(--serif)!important;letter-spacing:.5em;margin-bottom:16px!important}
+#estado::before,#estado::after{content:"✦";margin:0 .9em;opacity:.55;letter-spacing:0}
+@keyframes dlgEntra{from{opacity:0;transform:translateY(10px)}to{opacity:1;transform:none}}
+@keyframes dlgSeta{50%{transform:translateY(3px);opacity:.4}}
+
+/* ---------- tema Abismo: pedra escura, ouro gasto, brasa ---------- */
+#app[data-tema="abismo"]{--fundo:#0b0908;--painel:#14100e;--borda:#3a2e24;--texto:#efe6d6;--fraco:#a8987f;--laranja:#e0a24a;--ouro:#c9a35a;
+  --verde:#7fbf6a;--ciano:#8fc7d8;--vermelho:#d0574a;--amarelo:#e8c46a;
+  --cantos:linear-gradient(var(--ouro),var(--ouro)) 0 0/12px 1px,linear-gradient(var(--ouro),var(--ouro)) 0 0/1px 12px,
+    linear-gradient(var(--ouro),var(--ouro)) 100% 0/12px 1px,linear-gradient(var(--ouro),var(--ouro)) 100% 0/1px 12px,
+    linear-gradient(var(--ouro),var(--ouro)) 0 100%/12px 1px,linear-gradient(var(--ouro),var(--ouro)) 0 100%/1px 12px,
+    linear-gradient(var(--ouro),var(--ouro)) 100% 100%/12px 1px,linear-gradient(var(--ouro),var(--ouro)) 100% 100%/1px 12px;
+  background:radial-gradient(ellipse at 50% -20%,#2a1d12 0,transparent 55%),radial-gradient(ellipse at 50% 120%,#1a0f0a 0,transparent 50%),var(--fundo)}
+#app[data-tema="abismo"] header,#app[data-tema="abismo"] footer,#app[data-tema="abismo"] #trilho{background:linear-gradient(#17120f,#0e0b09);border-color:#4a3a2a;box-shadow:inset 0 1px 0 #ffffff08}
+#app[data-tema="abismo"] header{border-bottom:1px solid #6b5530;box-shadow:0 1px 0 #000,0 2px 0 #2a2119}
+#app[data-tema="abismo"] .marca b{font-family:var(--serif);font-weight:700;letter-spacing:.22em;color:#f3e3c3;text-shadow:0 0 18px #e0a24a40}
+#app[data-tema="abismo"] .marca small{font-family:var(--serif);font-style:italic;border-color:#4a3a2a}
+#app[data-tema="abismo"] .cubo{background:#e0a24a;box-shadow:0 0 12px #e0a24a,5px 5px 0 #6b4220;animation:brasa 2.4s ease-in-out infinite}
+#app[data-tema="abismo"] #vistas button{font-family:var(--serif);font-weight:600;letter-spacing:.24em;font-size:15px;border-bottom:2px solid transparent;position:relative}
+#app[data-tema="abismo"] #vistas button.ativa{color:#f3e3c3;border-bottom-color:var(--ouro);text-shadow:0 0 14px #e0a24a80}
+#app[data-tema="abismo"] #vistas button.ativa::before{content:"◆";position:absolute;left:50%;bottom:-7px;transform:translateX(-50%);font-size:9px;color:var(--ouro)}
+/* botões: placas de pedra com filete de ouro, acendem como brasa ao passar o mouse */
+#app[data-tema="abismo"] .bt,#app[data-tema="abismo"] header .topo-botoes button,#app[data-tema="abismo"] .p-topo button,#app[data-tema="abismo"] .m-botoes button,
+#app[data-tema="abismo"] #galFiltros button,#app[data-tema="abismo"] .proc-bt button,#app[data-tema="abismo"] .conv button,#app[data-tema="abismo"] .pj button,
+#app[data-tema="abismo"] #etiquetas button,#app[data-tema="abismo"] .vis-temas button,#app[data-tema="abismo"] .vis-roupas button{
+  background:linear-gradient(#221b16,#15110e);border:1px solid #5a4730;box-shadow:inset 0 1px 0 #ffffff12,inset 0 0 0 1px #00000080,0 2px 0 #000;
+  font-family:var(--serif);letter-spacing:.06em;transition:border-color .2s,box-shadow .2s,color .2s}
+#app[data-tema="abismo"] .bt:hover,#app[data-tema="abismo"] header .topo-botoes button:hover,#app[data-tema="abismo"] .p-topo button:hover,#app[data-tema="abismo"] .m-botoes button:hover,
+#app[data-tema="abismo"] #galFiltros button:hover,#app[data-tema="abismo"] .proc-bt button:hover,#app[data-tema="abismo"] .conv button:hover,#app[data-tema="abismo"] .pj button:hover,
+#app[data-tema="abismo"] #etiquetas button:hover,#app[data-tema="abismo"] .vis-temas button:hover,#app[data-tema="abismo"] .vis-roupas button:hover{
+  border-color:var(--ouro);color:#f3e3c3;box-shadow:inset 0 1px 0 #ffffff18,inset 0 0 0 1px #00000080,0 0 16px #e0a24a38,0 2px 0 #000}
+#app[data-tema="abismo"] .bt.forte,#app[data-tema="abismo"] .pj .forte,#app[data-tema="abismo"] .proc-bt .rodar,#app[data-tema="abismo"] #galFiltros button.on{
+  background:linear-gradient(#e9b25a,#b9772c);border-color:#f3cf86;color:#1c1006;text-shadow:0 1px 0 #ffffff40;box-shadow:inset 0 1px 0 #fff6,0 0 14px #e0a24a40,0 2px 0 #000}
+#app[data-tema="abismo"] .bt.forte:hover,#app[data-tema="abismo"] .proc-bt .rodar:hover{animation:brasaBt 1.4s ease-in-out infinite}
+#app[data-tema="abismo"] button.perigo{border-color:#7a3a30}
+#app[data-tema="abismo"] button.perigo:hover{background:linear-gradient(#5a1e18,#3a120e);color:#ffd8d0;border-color:#d0574a}
+#app[data-tema="abismo"] .perigo.armado{background:linear-gradient(#a8352a,#6a1c14);border-color:#ff8a7a;color:#fff}
+/* painéis com cantos de ouro */
+#app[data-tema="abismo"] .bloco,#app[data-tema="abismo"] .missao,#app[data-tema="abismo"] .proc,#app[data-tema="abismo"] .hist,#app[data-tema="abismo"] .conv,#app[data-tema="abismo"] .pj{
+  background:var(--cantos),linear-gradient(#17120f,#110d0b);background-repeat:no-repeat;border:1px solid #3a2e24;box-shadow:inset 0 0 0 1px #000,0 10px 26px #0009}
+#app[data-tema="abismo"] .proc{border-top:1px solid var(--ouro)}
+#app[data-tema="abismo"] #palco{border:1px solid #4a3a2a;box-shadow:inset 0 0 0 1px #000,inset 0 0 60px #000a;background:#0a0807}
+#app[data-tema="abismo"] .bloco h2,#app[data-tema="abismo"] .rot,#app[data-tema="abismo"] #visual h2{font-family:var(--serif);font-weight:600;letter-spacing:.28em;color:var(--ouro);border-left:0;padding-left:0}
+#app[data-tema="abismo"] .bloco h2::before,#app[data-tema="abismo"] .rot::before,#app[data-tema="abismo"] #visual h2::before{content:"❖";font-size:11px;opacity:.8}
+#app[data-tema="abismo"] .aba-topo h1,#app[data-tema="abismo"] .proc b,#app[data-tema="abismo"] .m-titulo,#app[data-tema="abismo"] .p-titulo{font-family:var(--serif);letter-spacing:.03em}
+#app[data-tema="abismo"] #campo{background:#0e0b09;border:1px solid #5a4730;font-family:var(--serif);font-size:17px;box-shadow:inset 0 2px 8px #000}
+#app[data-tema="abismo"] #campo:focus{border-color:var(--ouro);box-shadow:inset 0 2px 8px #000,0 0 14px #e0a24a30}
+#app[data-tema="abismo"] #mic{background:radial-gradient(#e9b25a,#9a5a20);border:1px solid #f3cf86;border-radius:50%;box-shadow:0 0 18px #e0a24a60}
+#app[data-tema="abismo"] .aviso{background:var(--dlg-fundo);border:1px solid var(--ouro);border-left:3px solid var(--ouro);box-shadow:0 0 0 2px #000a,0 10px 26px #000a;font-family:var(--serif)}
+#app[data-tema="abismo"] .aviso small{font-family:var(--serif);letter-spacing:.28em;color:var(--ouro)}
+#app[data-tema="abismo"] .aviso.erro{border-color:var(--vermelho)}
+#app[data-tema="abismo"] #painel,#app[data-tema="abismo"] #visual,#app[data-tema="abismo"] #procJanela>*{border:1px solid var(--ouro);box-shadow:0 0 0 3px #000,0 0 0 4px #6b5530,0 20px 60px #000d}
+#app[data-tema="abismo"] #visual{background:linear-gradient(#17120f,#0e0b09)}
+#app[data-tema="abismo"] #galeria,#app[data-tema="abismo"] #processos,#app[data-tema="abismo"] #conversas{background:radial-gradient(ellipse at 50% 0,#1e1610 0,transparent 60%),var(--fundo)}
+#app[data-tema="abismo"] ::-webkit-scrollbar{width:10px;height:10px}
+#app[data-tema="abismo"] ::-webkit-scrollbar-thumb{background:#3a2e24;border:2px solid #0b0908}
+#app[data-tema="abismo"] ::-webkit-scrollbar-track{background:#0b0908}
+@keyframes brasa{50%{background:#ffcb7a;box-shadow:0 0 20px #e0a24a,5px 5px 0 #6b4220}}
+@keyframes brasaBt{50%{box-shadow:inset 0 1px 0 #fff6,0 0 24px #e0a24a80,0 2px 0 #000}}
+
+/* temas antigos ganham a caixa de diálogo na cor deles */
+#app[data-tema="grimorio"]{--dlg-fundo:linear-gradient(#f6ecd2f2,#e9dab4f2);--dlg-borda:#8a6a3c;--dlg-texto:#2a1d10}
+#app[data-tema="cristal"]{--ouro:#9a7bff;--dlg-fundo:linear-gradient(#141030f0,#0c0a1ef0)}
+#app[data-tema="rpg"]{--ouro:#d8dcef;--dlg-fundo:linear-gradient(#1c2a6af2,#121c4af2)}
+#app[data-tema="torre"]{--ouro:#c9772b}
+
+/* menu Aparência */
+.vis-cab{display:flex;align-items:baseline;gap:12px;margin:-2px 0 12px;padding-bottom:10px;border-bottom:1px solid var(--borda)}
+.vis-cab b{font-family:var(--serif);font-size:22px;letter-spacing:.06em}
+.vis-cab span{color:var(--fraco);font-size:12.5px}
+.vis-temas .amostra{width:14px;height:14px;border:1px solid #ffffff30;box-shadow:inset 0 0 0 1px #0006}
+header button,#vistas button{white-space:nowrap}
+#app[data-tema="abismo"] #vistas button{letter-spacing:.2em;padding:10px 16px}
+#app[data-tema="abismo"] header .topo-botoes button{letter-spacing:.02em;padding:8px 14px}
+#app[data-tema="abismo"] #etiquetas button,#app[data-tema="abismo"] #chCota{white-space:nowrap}
+#app[data-tema="abismo"] header{gap:16px}
+#app[data-tema="abismo"] #chCota{overflow:visible;max-width:none}
+#visual button.on{border-color:var(--ouro)!important;color:var(--texto);box-shadow:0 0 0 1px var(--ouro),0 0 14px color-mix(in srgb,var(--ouro) 35%,transparent)!important}
+#visual{max-height:calc(100% - 100px);overflow:auto}
+@media (prefers-reduced-motion:reduce){#saudacao,#saudacao::after,#app[data-tema="abismo"] .cubo{animation:none}}

@@ -47,7 +47,7 @@ def _gravar_json(arq, dado):
 
 
 AJUSTES = _ler_json(ARQ_AJUSTES, {})
-VISUAL = {"roupa": "torre", "tema": "cristal", "tam": 1, "v": 0}      # roupa do mago, tema da tela e poses desenhadas
+VISUAL = {"roupa": "torre", "tema": "abismo", "tam": 1, "forma": "orbe", "cenario": "ruinas", "v": 0}      # roupa do mago, tema da tela e poses desenhadas
 try:
     with open(ARQ_VISUAL, encoding="utf-8") as f:
         VISUAL.update(json.load(f))
@@ -1096,15 +1096,15 @@ class Jarvis:
         """Roupa do mago e tema da tela. A tela desenha o mago e manda as poses prontas; a esfera flutuante só as copia."""
         if req.method == "POST":
             d = await req.json()
-            for k in ("roupa", "tema", "tam", "mini_sempre"):
+            for k in ("roupa", "tema", "tam", "mini_sempre", "forma", "cenario"):
                 if k in d:
                     VISUAL[k] = d[k]
             if isinstance(d.get("poses"), dict):
                 VISUAL["poses"] = d["poses"]
             VISUAL["v"] = int(time.time() * 1000) % 10 ** 9
             _gravar_json(ARQ_VISUAL, VISUAL)
-            if "roupa" in d or "tema" in d:      # as outras telas abertas trocam junto
-                self.enviar(t="visual", v={k: VISUAL.get(k) for k in ("roupa", "tema", "tam", "mini_sempre")})
+            if any(k in d for k in ("roupa", "tema", "forma", "cenario")):      # as outras telas abertas trocam junto
+                self.enviar(t="visual", v={k: VISUAL.get(k) for k in ("roupa", "tema", "tam", "mini_sempre", "forma", "cenario")})
         cheio = req.query.get("poses") == "1"
         return web.json_response({k: v for k, v in VISUAL.items() if cheio or k != "poses"})
 

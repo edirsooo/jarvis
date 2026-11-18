@@ -103,6 +103,8 @@ Opções úteis do `config.json`:
 
 A personalidade (um espírito de poucas palavras que vive no orbe) está em `personalidade.md`.
 
+O botão **✦ Aparência** troca a forma do Jarvis (orbe de cubos, fantasminha, bola de fogo, entidade elétrica, espírito dourado), o cenário do palco (ruínas ao luar, masmorra, floresta sombria, torre arcana), a classe do mago (mago, sábio, arcanista, aprendiz, cavaleiro, patrulheiro, necromante) e o tema da tela. Para criar um cenário novo, basta uma entrada em `CENAS` (`web\cenario.js`); uma forma nova, em `FORMAS` e `formaPonto` (`web\app.js`); uma classe nova, em `R` (`web\mago.js`).
+
 ### Transcrição na placa
 
 Sem placa NVIDIA, a transcrição usa o processador com o modelo `small`. Com placa, instale o PyTorch com CUDA (ele traz as bibliotecas que a transcrição precisa) e o Jarvis passa a usar o `large-v3-turbo` sozinho:

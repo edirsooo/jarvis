@@ -7,6 +7,7 @@ Rodam numa cópia isolada do Jarvis: outra porta, outra pasta de dados (na pasta
 | `teste_falas.py` | pedido dito em pedaços, "não é contigo", janela de conversa, missão redigida pelo Claude | não |
 | `teste_servidor.py` | processos, pedido literal, marco, ajuste com a missão rodando, projeto, conversa numerada, agenda, etiquetas, ler entrega, abrir programa sem executar, log das ações | não (usa `falso\`, um Claude Code de mentira) |
 | `teste_tela.py` | abas PROCESSOS, CONVERSAS e ENTREGAS, cartão da missão, etiquetas, Parar tudo com confirmação, clique no orbe mudo, texto sem ligação; tira fotos | não |
+| `teste_visual.py` | cada cenário desenha, cada forma do Jarvis, menu Aparência com as 7 classes, escolha guardada, temas antigos, ritmo do cenário (~30 quadros/s); tira fotos | não |
 | `teste_clique.py` | o mago indo aonde se clica, sem marcar texto | não |
 | `teste_leads_ouvido.py` | planilha de leads e filtro de voz da transcrição | não (usa a voz do Edge para gerar as frases) |
 | `teste_claude_real.py` | regras chegando inteiras, modelo certo, retomada e ajuste no meio, com o Claude Code de verdade | um pouco (Haiku) |

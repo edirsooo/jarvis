@@ -1,6 +1,6 @@
 // Mini mago: o dono do Jarvis em voxel, morando na tela. Dá para pegar, balançar e soltar em cima dos quadros.
 // Motor de desenho e de física próprio: caixas em projeção oblíqua, sem imagens.
-// Quatro roupas (torre, grimorio, cristal, rpg) e cinco temas de tela. A escolha fica no servidor (/api/visual),
+// Sete classes (roupas), seis temas de tela, a forma do Jarvis (app.js) e o cenário (cenario.js). A escolha fica no servidor (/api/visual),
 // que também recebe as poses já desenhadas para a esfera flutuante (mini.py) copiar.
 (function () {
   const q = (s) => document.querySelector(s);
@@ -12,11 +12,12 @@
     pega: ['Ei!', 'Uooou!', 'Opa!'], chacoalha: ['Eita!', 'Paraaa!', 'Vou ficar tonto!'], tonto: ['Tudo girando…', 'Fiquei tonto…'],
     quadro: ['Boa vista daqui.', 'Cantinho novo!'], missao: ['Vigio essa missão.', 'Essa está andando.'], palco: ['De volta ao orbe.'], chao: ['Ufa!', 'Pousei!'],
     carinho: ['Hehe!', 'Mais um!'], pronta: ['Missão cumprida!', 'Está feito!', 'Mais uma!'], falhou: ['Essa escapou…', 'Não deu.'],
-    acorda: ['Opa, voltei!', 'Cochilei…'], roupa: ['Gostei dessa!', 'Manto novo!', 'Pronto para a magia.'],
+    acorda: ['Opa, voltei!', 'Cochilei…'], roupa: ['Gostei dessa!', 'Visual novo!', 'Pronto para a aventura.'],
   };
-  const ROUPAS = [['torre', 'Torre'], ['grimorio', 'Grimório'], ['cristal', 'Cristal'], ['rpg', 'RPG']];
-  const TEMAS = [['classico', 'Clássico', '#ff6b1a'], ['torre', 'Torre', '#c9772b'], ['grimorio', 'Grimório', '#5fa56f'], ['cristal', 'Cristal', '#8f6bff'], ['rpg', 'RPG', '#3f7bff']];
-  const V = { roupa: 'torre', tema: 'cristal', tam: 1, mini_sempre: false };
+  const ROUPAS = [['torre', 'Mago da torre'], ['grimorio', 'Sábio'], ['cristal', 'Arcanista'], ['rpg', 'Aprendiz'],
+    ['cavaleiro', 'Cavaleiro'], ['patrulheiro', 'Patrulheiro'], ['necro', 'Necromante']];
+  const TEMAS = [['abismo', 'Abismo', '#c9a35a'], ['classico', 'Clássico', '#ff6b1a'], ['torre', 'Torre', '#c9772b'], ['grimorio', 'Grimório', '#5fa56f'], ['cristal', 'Cristal', '#8f6bff'], ['rpg', 'RPG', '#3f7bff']];
+  const V = { roupa: 'torre', tema: 'abismo', tam: 1, mini_sempre: false, forma: 'orbe', cenario: 'ruinas' };
 
   // ----- desenho voxel: caixas [x, y, z, largura, altura, fundo, cor, flag]; x para a direita, y para cima, z para o fundo -----
   const KX = 0.34, KY = 0.3, tons = {};
@@ -81,6 +82,10 @@
     grimorio: { cab: 'chapeu', roupa: '#2f6b45', roupa2: '#234f34', borda: '#e0b040', cinto: '#5a3a1e', bota: '#4a3220', gema: '#ffb02e', gema2: '#fff0a8', pau: '#6a4424', topo: 25.4, estrela: '#e0b040' },
     cristal:  { cab: 'capuz',  roupa: '#1f2a66', roupa2: '#151c48', borda: '#5ad7ff', cinto: '#0f1436', bota: '#20263e', gema: '#b98cff', gema2: '#f0e4ff', pau: '#4a5a8a', topo: 21.4, cristais: '#9a7bff' },
     rpg:      { cab: 'chapeu', roupa: '#2b63d9', roupa2: '#1f49a6', borda: '#ffd23f', cinto: '#7a3a16', bota: '#5a3a22', gema: '#ff5a3a', gema2: '#ffd0a0', pau: '#8a5a30', topo: 25.4, estrela: '#ffd23f' },
+    // classes de aventura: mesmo rosto, outro equipamento
+    cavaleiro:   { cab: 'elmo',  roupa: '#5a6270', roupa2: '#3c424e', borda: '#c9a35a', cinto: '#3a2618', bota: '#2c2f36', gema: '#cfd6e0', gema2: '#ffffff', pau: '#4a3020', topo: 20.6, arma: 'espada', metal: '#8a93a3', pluma: '#9b2a24' },
+    patrulheiro: { cab: 'capuz', roupa: '#2c3b26', roupa2: '#1f2a1b', borda: '#a8794a', cinto: '#4a3020', bota: '#3a2a1c', gema: '#7ddc6a', gema2: '#e4ffd0', pau: '#5a3a1e', topo: 21.4 },
+    necro:       { cab: 'capuz', roupa: '#1c1a22', roupa2: '#111017', borda: '#58d68d', cinto: '#0a090d', bota: '#16151b', gema: '#58d68d', gema2: '#d8ffe4', pau: '#d6ccb4', topo: 21.4, cristais: '#58d68d' },
   };
   const LARG = 15, topoDe = (k) => (R[k] || R.torre).topo;
   function mago(p, t, k) {
@@ -104,8 +109,14 @@
     if (!p.semCajado) {
       const e = Math.abs(p.bdy || 0), m = p.bd, cx = m === 1 ? 5.7 : m === 2 ? 5.1 : 5.1, cz = m === 1 ? -2.4 : m === 2 ? -3 : 1.9, y0 = (m === 1 ? 4.6 + e : m === 2 ? 1.8 + e : 0.3) - by * (m ? 0 : 1);
       const g = p.brilho > 0.5 ? o.gema2 : o.gema;
-      b(cx, y0, cz, 0.8, 14.6, 0.8, o.pau); b(cx - 0.35, y0 + 13.2, cz - 0.35, 1.5, 0.6, 1.5, o.borda);
-      b(cx - 0.55, y0 + 14.6, cz - 0.55, 1.9, 1.9, 1.9, g, 2); b(cx - 0.1, y0 + 16.5, cz - 0.1, 1, 0.7, 1, g, 2);
+      if (o.arma === 'espada') {
+        b(cx, y0, cz, 0.8, 3.2, 0.8, o.pau); b(cx - 0.1, y0 - 0.6, cz - 0.1, 1, 0.7, 1, o.borda);                 // cabo e pomo
+        b(cx - 1.3, y0 + 3.2, cz - 0.45, 3.4, 0.8, 1.7, o.borda);                                                  // guarda
+        b(cx - 0.15, y0 + 4, cz + 0.05, 1.1, 9.6, 0.7, g, p.brilho > 0.5 ? 2 : 0); b(cx + 0.1, y0 + 13.6, cz + 0.15, 0.6, 0.9, 0.5, g, p.brilho > 0.5 ? 2 : 0);   // lâmina
+      } else {
+        b(cx, y0, cz, 0.8, 14.6, 0.8, o.pau); b(cx - 0.35, y0 + 13.2, cz - 0.35, 1.5, 0.6, 1.5, o.borda);
+        b(cx - 0.55, y0 + 14.6, cz - 0.55, 1.9, 1.9, 1.9, g, 2); b(cx - 0.1, y0 + 16.5, cz - 0.1, 1, 0.7, 1, g, 2);
+      }
     }
     // cabeça, barba e cabelo cacheado
     b(-5, 8, -0.6, 10, 7.2, 6.6, PELE);
@@ -115,7 +126,13 @@
     b(-3.4, 12.75, -0.75, 2, 0.4, 0.15, CABELO); b(1.4, 12.75, -0.75, 2, 0.4, 0.15, CABELO);                // sobrancelhas
     boca(b, p, 8.9, -0.95, '#f3d9c4');
     b(-4.5, 13.7, -1, 2.3, 1.3, 0.5, CABELO); b(-1.9, 14.1, -1, 2.3, 1, 0.5, CABELO); b(0.8, 13.6, -1, 2.1, 1.4, 0.5, CABELO); b(3, 14, -1, 1.6, 1.1, 0.5, CABELO);
-    if (o.cab === 'capuz') {
+    if (o.cab === 'elmo') {
+      b(-5.6, 13.4, -1.2, 11.2, 2.8, 7.8, o.metal); b(-4.4, 16.2, -0.4, 8.8, 1.2, 6.2, o.metal);
+      b(-6, 8.2, -1, 1.3, 5.4, 7.4, o.metal); b(4.7, 8.2, -1, 1.3, 5.4, 7.4, o.metal); b(-5.4, 8, 5.8, 10.8, 6, 1.4, o.metal);
+      b(-5.6, 13.4, -1.4, 11.2, 0.7, 0.2, o.borda); b(-0.5, 10.6, -1.35, 1, 3, 0.3, o.metal);
+      b(-0.7, 17.4, 0.6, 1.4, 2.6, 4.6, o.pluma); b(-0.7, 19.6, 3.8, 1.4, 1, 2.4, o.pluma);
+      b(-4.6, 7.4, 0.2, 9.2, 1, 5.2, o.metal);                                                                    // gorjal
+    } else if (o.cab === 'capuz') {
       b(-5.8, 15.2, -1.4, 11.6, 2.2, 8.2, o.roupa); b(-5.8, 6.5, 6, 11.6, 8.7, 1.8, o.roupa2);
       b(-6.7, 7, -0.2, 1.7, 8.4, 6.4, o.roupa); b(5, 7, -0.2, 1.7, 8.4, 6.4, o.roupa);
       b(-5.8, 15.2, -1.6, 11.6, 0.8, 0.2, o.borda); b(-6.7, 7, -0.4, 0.95, 8.2, 0.2, o.borda); b(5.75, 7, -0.4, 0.95, 8.2, 0.2, o.borda);
@@ -470,15 +487,17 @@
     olhar.x = guarda.x; olhar.y = guarda.y; P.surf = guarda.s;
     return out;
   }
-  function tema() { q('#app').dataset.tema = V.tema; }
+  function tema() { const a = q('#app'); a.dataset.tema = V.tema; a.dataset.forma = V.forma; a.dataset.cenario = V.cenario; }
   function grava(extra) {
-    fetch('/api/visual', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(Object.assign({ roupa: V.roupa, tema: V.tema, tam: V.tam, mini_sempre: !!V.mini_sempre, poses: poses() }, extra || {})) }).catch(() => {});
+    fetch('/api/visual', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(Object.assign({ roupa: V.roupa, tema: V.tema, tam: V.tam, mini_sempre: !!V.mini_sempre, forma: V.forma, cenario: V.cenario, poses: poses() }, extra || {})) }).catch(() => {});
   }
   function aplica(v, deFora) {
     if (v.roupa && R[v.roupa]) V.roupa = v.roupa;
     if (v.tema && TEMAS.some((x) => x[0] === v.tema)) V.tema = v.tema;
     if (v.tam) V.tam = +v.tam || 1;
     if ('mini_sempre' in v) V.mini_sempre = !!v.mini_sempre;
+    if (v.forma && (window.FORMAS || []).some((x) => x[0] === v.forma)) V.forma = v.forma;
+    if (v.cenario && (window.CENARIOS || []).some((x) => x[0] === v.cenario)) V.cenario = v.cenario;
     tema(); if (el) mede();
     if (!deFora) grava();
     marca();
@@ -486,6 +505,8 @@
   function marca() {
     document.querySelectorAll('#visual [data-roupa]').forEach((b) => b.classList.toggle('on', b.dataset.roupa === V.roupa));
     document.querySelectorAll('#visual [data-tema]').forEach((b) => b.classList.toggle('on', b.dataset.tema === V.tema));
+    document.querySelectorAll('#visual [data-forma]').forEach((b) => b.classList.toggle('on', b.dataset.forma === V.forma));
+    document.querySelectorAll('#visual [data-cenario]').forEach((b) => b.classList.toggle('on', b.dataset.cenario === V.cenario));
     document.querySelectorAll('#visual [data-tam]').forEach((b) => b.classList.toggle('on', +b.dataset.tam === +V.tam));
     document.querySelectorAll('#visual [data-mini]').forEach((b) => b.classList.toggle('on', (b.dataset.mini === '1') === !!V.mini_sempre));
   }
@@ -493,7 +514,11 @@
     let m = q('#visual');
     if (!m) {
       m = document.createElement('div'); m.id = 'visual'; m.hidden = true;
-      m.innerHTML = `<h2>ROUPA DO MAGO</h2><div class="vis-roupas">${ROUPAS.map(([k, n]) => `<button data-roupa="${k}"><canvas width="120" height="132"></canvas><span>${n}</span></button>`).join('')}</div>
+      const ICONE = { orbe: '#8a90a8', fantasma: '#cfe6f2', chama: '#ff8a3a', eletrica: '#7ab8ff', espirito: '#e8c46a', ruinas: 'linear-gradient(#151426,#4a3a36)', masmorra: 'linear-gradient(#2a221d,#5a1e14)', floresta: 'linear-gradient(#071613,#1a3a30)', torre: 'linear-gradient(#1a1430,#3a2a6a)', nenhum: 'transparent' };
+      m.innerHTML = `<div class="vis-cab"><b>Aparência</b><span>Escolhas guardadas para a próxima vez</span></div>
+        <h2>FORMA DO JARVIS</h2><div class="vis-temas">${(window.FORMAS || []).map(([k, n]) => `<button data-forma="${k}"><i class="amostra" style="background:${ICONE[k] || '#888'}"></i>${n}</button>`).join('')}</div>
+        <h2>CENÁRIO</h2><div class="vis-temas">${(window.CENARIOS || []).map(([k, n]) => `<button data-cenario="${k}"><i class="amostra" style="background:${ICONE[k] || '#888'}"></i>${n}</button>`).join('')}</div>
+        <h2>CLASSE DO MAGO</h2><div class="vis-roupas">${ROUPAS.map(([k, n]) => `<button data-roupa="${k}"><canvas width="120" height="132"></canvas><span>${n}</span></button>`).join('')}</div>
         <h2>TEMA DA TELA</h2><div class="vis-temas">${TEMAS.map(([k, n, c]) => `<button data-tema="${k}"><i style="background:${c}"></i>${n}</button>`).join('')}</div>
         <h2>TAMANHO</h2><div class="vis-temas">${[[0.8, 'Pequeno'], [1, 'Médio'], [1.35, 'Grande']].map(([v, n]) => `<button data-tam="${v}">${n}</button>`).join('')}</div>
         <h2>ESFERA FLUTUANTE</h2><div class="vis-temas"><button data-mini="0">Some com o painel aberto</button><button data-mini="1">Sempre por cima (fica em dobro)</button></div>
@@ -504,6 +529,8 @@
         const b = e.target.closest('button'); if (!b) return;
         if (b.dataset.roupa) { aplica({ roupa: b.dataset.roupa }); festa(1); diz(um(F.roupa)); }
         else if (b.dataset.tema) aplica({ tema: b.dataset.tema });
+        else if (b.dataset.forma) aplica({ forma: b.dataset.forma });
+        else if (b.dataset.cenario) aplica({ cenario: b.dataset.cenario });
         else if (b.dataset.tam) aplica({ tam: +b.dataset.tam });
         else if (b.dataset.mini) aplica({ mini_sempre: b.dataset.mini === '1' });
       });

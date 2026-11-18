@@ -596,6 +596,50 @@ const PALETA = {
   pensando: [[255, 210, 63], [255, 107, 26]], falando: [[255, 107, 26], [255, 190, 120]],
   trabalhando: [[25, 195, 125], [255, 107, 26]], mudo: [[120, 40, 50], [60, 30, 36]],
 };
+// formas do Jarvis: cada uma com paleta própria por estado (o corpo muda em formaPonto, os enfeites em formaEnfeite)
+const FORMAS = [['orbe', 'Orbe de cubos'], ['fantasma', 'Fantasminha'], ['chama', 'Bola de fogo'], ['eletrica', 'Entidade elétrica'], ['espirito', 'Espírito dourado']];
+window.FORMAS = FORMAS;
+const PALETA_FORMA = {
+  fantasma: { dormindo: [[120, 140, 170], [70, 80, 100]], ouvindo: [[170, 240, 255], [240, 255, 255]], pensando: [[220, 230, 255], [170, 180, 255]], falando: [[200, 255, 240], [255, 255, 255]], trabalhando: [[150, 255, 200], [220, 255, 240]], mudo: [[110, 70, 80], [60, 40, 50]] },
+  chama: { dormindo: [[150, 50, 20], [90, 30, 14]], ouvindo: [[255, 170, 60], [255, 240, 180]], pensando: [[255, 120, 30], [255, 220, 90]], falando: [[255, 140, 40], [255, 230, 150]], trabalhando: [[255, 130, 40], [255, 200, 80]], mudo: [[90, 40, 36], [50, 30, 28]] },
+  eletrica: { dormindo: [[60, 70, 140], [40, 40, 90]], ouvindo: [[120, 220, 255], [240, 250, 255]], pensando: [[180, 120, 255], [120, 220, 255]], falando: [[140, 200, 255], [255, 255, 255]], trabalhando: [[100, 160, 255], [200, 140, 255]], mudo: [[70, 40, 70], [40, 30, 45]] },
+  espirito: { dormindo: [[150, 120, 60], [90, 70, 40]], ouvindo: [[255, 220, 140], [255, 250, 220]], pensando: [[255, 200, 90], [255, 160, 60]], falando: [[255, 210, 120], [255, 245, 200]], trabalhando: [[230, 200, 110], [140, 220, 160]], mudo: [[90, 60, 50], [50, 40, 36]] },
+};
+const formaAtual = () => { const f = document.getElementById('app').dataset.forma; return PALETA_FORMA[f] ? f : 'orbe'; };
+// o corpo de cada forma, no espaço do próprio Jarvis (y para baixo); devolve [x, y, z]
+function formaPonto(fm, p, t) {
+  let x = p.x, y = p.y, z = p.z;
+  if (fm === 'fantasma') {
+    if (y > 0) { const s = 1 + y * 0.22; x *= s; z *= s; y = y * 1.5 + 0.09 * Math.sin(Math.atan2(z, x) * 6 + t * 4) * y; }   // a barra do lençol ondula
+  } else if (fm === 'chama') {
+    const up = Math.max(0, -y), sc = 1 - up * 0.6;
+    x = x * sc + 0.07 * Math.sin(t * 7 + y * 5 + p.f) * up; z *= sc; y = y * 1.2 - up * up * 0.55;
+    if (p.s > 1.3 && up > 0.25) { const k = (t * 0.45 * p.s + p.f) % 1; y -= k * 1.1; x *= 1 - k * 0.6; z *= 1 - k * 0.6; }   // fagulhas que sobem
+  } else if (fm === 'espirito') {
+    if (p.s >= 1.22) { const a = p.f * 3 + t * 0.7 * p.s, rr = 1.35 + 0.12 * Math.sin(t + p.f); x = Math.cos(a) * rr; z = Math.sin(a) * rr; y = 0.22 * Math.sin(a * 2 + p.f); }   // luzes em órbita
+    else { x *= 0.62; y *= 0.62; z *= 0.62; }
+  }
+  return [x, y, z];
+}
+// enfeites desenhados por cima: olhos do fantasma, raios da entidade elétrica
+function formaEnfeite(fm, cx, cy, R, t, e) {
+  if (fm === 'fantasma') {
+    const pisca = (t % 4.2) < 0.12, w = R * 0.15, h = pisca ? R * 0.03 : R * 0.22, oy = cy - R * 0.08 - h / 2;
+    g.fillStyle = 'rgba(12,16,28,.92)';
+    g.fillRect(cx - R * 0.32 - w / 2, oy, w, h); g.fillRect(cx + R * 0.32 - w / 2, oy, w, h);
+    if (e === 'falando') { const b = R * (0.06 + V.nivel * 0.16); g.fillRect(cx - b / 2, cy + R * 0.22, b, b); }
+  } else if (fm === 'eletrica') {
+    const n = e === 'falando' || e === 'pensando' ? 3 : e === 'dormindo' || e === 'mudo' ? (Math.random() < 0.45 ? 1 : 0) : 2;
+    g.globalCompositeOperation = 'lighter'; g.lineWidth = Math.max(1.5, R * 0.018);
+    for (let i = 0; i < n; i++) {
+      const a = Math.random() * 6.28, r0 = R * 0.7, r1 = R * (1.15 + Math.random() * 0.45);
+      g.strokeStyle = `rgba(${V.cor2.map((v) => v | 0)},.85)`; g.beginPath(); g.moveTo(cx + Math.cos(a) * r0, cy + Math.sin(a) * r0);
+      for (let k = 1; k <= 5; k++) { const rr = r0 + (r1 - r0) * k / 5, aa = a + (Math.random() - 0.5) * 0.35; g.lineTo(cx + Math.cos(aa) * rr, cy + Math.sin(aa) * rr); }
+      g.stroke();
+    }
+    g.globalCompositeOperation = 'source-over';
+  }
+}
 const V = { cor1: [70, 78, 100], cor2: [40, 44, 58], vel: .15, amp: .04, raio: .8, nivel: 0, rot: 0, espalha: 0 };
 const ALVO = {
   dormindo: { vel: .12, amp: .03, raio: .72, espalha: 0 }, ouvindo: { vel: .35, amp: .05, raio: .92, espalha: .1 },
@@ -625,7 +669,7 @@ function fpsAlvo() {
 function quadro(agora) {
   if (agora - tAnt < 1000 / fpsAlvo() - 3) { requestAnimationFrame(quadro); return; }
   const dt = Math.min(.05, (agora - tAnt) / 1000); tAnt = agora;
-  const e = S.mudo ? 'mudo' : estadoVisual(), alvo = ALVO[e], pal = PALETA[e], k = 1 - Math.pow(.02, dt);
+  const fm = formaAtual(), e = S.mudo ? 'mudo' : estadoVisual(), alvo = ALVO[e], pal = (PALETA_FORMA[fm] || PALETA)[e], k = 1 - Math.pow(.02, dt);
   for (const c of ['vel', 'amp', 'raio', 'espalha']) V[c] += (alvo[c] - V[c]) * k;
   for (let i = 0; i < 3; i++) { V.cor1[i] += (pal[0][i] - V.cor1[i]) * k; V.cor2[i] += (pal[1][i] - V.cor2[i]) * k; }
   let nv = 0;
@@ -639,8 +683,10 @@ function quadro(agora) {
 
   const W = cv.width, H = cv.height, faixa = H < 260 * (devicePixelRatio || 1), coluna = !faixa && document.getElementById('app').classList.contains('trabalho');
   // coluna (com missões): a fala fica no alto e o mago no chão, então o orbe desce um pouco e cresce até a largura deixar
-  const cx = W / 2, cy = faixa ? H / 2 : coluna ? H * .54 : H * .4,
+  const desvio = { fantasma: -.16, chama: .14 }[fm] || 0, flutua = (fm === 'fantasma' || fm === 'espirito') ? Math.sin(agora / 650) * .035 : 0;
+  const cx = W / 2, cy0 = faixa ? H / 2 : coluna ? H * .54 : H * .4,
     R = (faixa ? Math.min(W, H) * .42 : coluna ? Math.min(W * .35, H * .27) : Math.min(W, H * .9) * .3) * V.raio;   // .35: o anel de nível (1,42 R) cabe dentro da coluna
+  const cy = cy0 + R * (desvio + flutua);
   V.cx = cx; V.cy = cy; V.R = R;
   g.clearRect(0, 0, W, H);
   V.olhaX += ((MOUSE.dentro ? MOUSE.nx : 0) - V.olhaX) * .08; V.olhaY += ((MOUSE.dentro ? MOUSE.ny : 0) - V.olhaY) * .08;
@@ -653,7 +699,9 @@ function quadro(agora) {
     else if (e === 'pensando') d += .09 * Math.sin(p.y * 9 + t * 7);
     else if (e === 'trabalhando') d += .05 * Math.sin(Math.atan2(p.z, p.x) * 4 + t * 3);
     d += V.espalha * p.s;
-    let x = p.x * cs - p.z * sn, z = p.x * sn + p.z * cs, y = p.y;
+    if (fm === 'eletrica') d += (Math.random() - .5) * .12 * (1 + V.nivel * 4);      // o corpo treme como faísca
+    const [fx, fy, fz] = fm === 'orbe' ? [p.x, p.y, p.z] : formaPonto(fm, p, t);
+    let x = fx * cs - fz * sn, z = fx * sn + fz * cs, y = fy;
     const y2 = y * ci - z * si, z2 = y * si + z * ci;
     lista.push([x * d, y2 * d, z2 * d, p]);
   }
@@ -675,6 +723,7 @@ function quadro(agora) {
     g.beginPath(); g.moveTo(px + l / 2, py - l / 2); g.lineTo(px + l / 2 + l * .3, py - l / 2 - l * .3);
     g.lineTo(px + l / 2 + l * .3, py + l / 2 - l * .3); g.lineTo(px + l / 2, py + l / 2); g.fill();  // lado
   }
+  if (!faixa) formaEnfeite(fm, cx, cy, R, t, e);
   // anel de nível, em blocos
   const blocos = faixa ? 0 : 48, on = Math.round(V.nivel * blocos);
   for (let i = 0; i < blocos; i++) {

@@ -8,7 +8,7 @@
 <link rel="stylesheet" href="estilo.css">
 </head>
 <body>
-<div id="app" class="parado">
+<div id="app" class="parado" data-tema="abismo" data-cenario="ruinas" data-forma="orbe">
   <header>
     <div class="marca"><span class="cubo"></span><b id="nome">JARVIS</b><small>by prestes design</small></div>
     <nav id="vistas">
@@ -24,7 +24,7 @@
       <span id="chCota" title="Cota mais apertada das assinaturas"></span>
     </div>
     <div class="topo-botoes">
-      <button id="btVisual" title="Roupa do mago, tema da tela e tamanho">🧙 Visual</button>
+      <button id="btVisual" title="Forma do Jarvis, cenário, classe do mago e tema">✦ Aparência</button>
       <button id="btMini" title="Vira só a esfera flutuando por cima, num canto da tela">Mini</button>
       <button id="btZerar" title="Recomeça a conversa do zero">Do zero</button>
       <button id="btParar" class="perigo" title="Interrompe todas as missões">Parar tudo</button>
@@ -125,6 +125,7 @@
   <div id="entrada" hidden><button id="btEntrar">▶ Ligar o Jarvis</button><p>Um clique libera o som nesta janela.</p></div>
 </div>
 <script src="app.js"></script>
+<script src="cenario.js"></script>
 <script src="mago.js"></script>
 </body>
 </html>
