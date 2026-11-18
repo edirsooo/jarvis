@@ -27,6 +27,21 @@ NOMES = {"dormindo": "DORMINDO", "ouvindo": "OUVINDO", "pensando": "PENSANDO", "
          "trabalhando": "TRABALHANDO", "mudo": "MIC DESLIGADO"}
 
 
+def paleta_da_cor(cor, e):
+    """A cor escolhida para o Jarvis (menu Aparência), com o brilho de cada estado. Igual à paletaDaCor do app.js."""
+    if not cor or len(str(cor)) != 7:
+        return None
+    try:
+        n = int(str(cor)[1:], 16)
+    except ValueError:
+        return None
+    c = [n >> 16, (n >> 8) & 255, n & 255]
+    k = lambda f: [min(255, v * f) for v in c]
+    claro = [v + (255 - v) * .55 for v in c]
+    return {"dormindo": [k(.55), k(.3)], "ouvindo": [c, claro], "pensando": [claro, k(.75)], "falando": [c, claro],
+            "trabalhando": [c, k(.7)], "mudo": [[120, 40, 50], [60, 30, 36]]}.get(e)
+
+
 def buscar():
     falhas = 0
     while E["vivo"]:
@@ -222,7 +237,7 @@ def main():
         if e == "dormindo" and E["ativas"]:
             e = "trabalhando"
         vel, amp, raio = ALVO.get(e, ALVO["dormindo"])
-        pal = PALETA.get(e, PALETA["dormindo"])
+        pal = paleta_da_cor(E.get("cor_jarvis"), e) or PALETA.get(e, PALETA["dormindo"])
         k = 1 - 0.02 ** dt
         v["vel"] += (vel - v["vel"]) * k
         v["amp"] += (amp - v["amp"]) * k

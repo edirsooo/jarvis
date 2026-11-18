@@ -1081,7 +1081,7 @@ class Jarvis:
             pc=any(str(x.modelo or "").lower() == "computador" for x in lista),
             estado=self.estado, mudo=self.mudo, nivel=round(self.nivel_mic, 3),
             legenda=self.legenda if self.estado == "falando" else "",
-            ativas=ativas, total=len(self.agentes.missoes), mago_v=VISUAL.get("v", 0),
+            ativas=ativas, total=len(self.agentes.missoes), mago_v=VISUAL.get("v", 0), cor_jarvis=VISUAL.get("cor_jarvis") or "",
             # com o painel grande em uso, a esfera some (não cobre botão); volta quando ele vai para outra janela
             # painel grande aberto (mesmo sem foco, ex.: restaurado pela barra de tarefas): só uma esfera na tela
             painel_frente=self._painel_frente(), **janelas.estado_mini()))
@@ -1096,15 +1096,15 @@ class Jarvis:
         """Roupa do mago e tema da tela. A tela desenha o mago e manda as poses prontas; a esfera flutuante só as copia."""
         if req.method == "POST":
             d = await req.json()
-            for k in ("roupa", "tema", "tam", "mini_sempre", "forma", "cenario", "cor"):
+            for k in ("roupa", "tema", "tam", "mini_sempre", "forma", "cenario", "cor", "cor_jarvis"):
                 if k in d:
                     VISUAL[k] = d[k]
             if isinstance(d.get("poses"), dict):
                 VISUAL["poses"] = d["poses"]
             VISUAL["v"] = int(time.time() * 1000) % 10 ** 9
             _gravar_json(ARQ_VISUAL, VISUAL)
-            if any(k in d for k in ("roupa", "tema", "forma", "cenario", "cor")):      # as outras telas abertas trocam junto
-                self.enviar(t="visual", v={k: VISUAL.get(k) for k in ("roupa", "tema", "tam", "mini_sempre", "forma", "cenario", "cor")})
+            if any(k in d for k in ("roupa", "tema", "forma", "cenario", "cor", "cor_jarvis")):      # as outras telas abertas trocam junto
+                self.enviar(t="visual", v={k: VISUAL.get(k) for k in ("roupa", "tema", "tam", "mini_sempre", "forma", "cenario", "cor", "cor_jarvis")})
         cheio = req.query.get("poses") == "1"
         return web.json_response({k: v for k, v in VISUAL.items() if cheio or k != "poses"})
 

@@ -605,6 +605,12 @@ const PALETA_FORMA = {
   eletrica: { dormindo: [[60, 70, 140], [40, 40, 90]], ouvindo: [[120, 220, 255], [240, 250, 255]], pensando: [[180, 120, 255], [120, 220, 255]], falando: [[140, 200, 255], [255, 255, 255]], trabalhando: [[100, 160, 255], [200, 140, 255]], mudo: [[70, 40, 70], [40, 30, 45]] },
   espirito: { dormindo: [[150, 120, 60], [90, 70, 40]], ouvindo: [[255, 220, 140], [255, 250, 220]], pensando: [[255, 200, 90], [255, 160, 60]], falando: [[255, 210, 120], [255, 245, 200]], trabalhando: [[230, 200, 110], [140, 220, 160]], mudo: [[90, 60, 50], [50, 40, 36]] },
 };
+// cor escolhida para o Jarvis: a mesma cor em todos os estados, mudando só o brilho (o estado continua legível)
+function paletaDaCor(hex, e) {
+  const n = parseInt(hex.slice(1), 16), c = [n >> 16, (n >> 8) & 255, n & 255];
+  const k = (f) => c.map((v) => Math.min(255, v * f)), claro = c.map((v) => v + (255 - v) * .55);
+  return { dormindo: [k(.55), k(.3)], ouvindo: [c, claro], pensando: [claro, k(.75)], falando: [c, claro], trabalhando: [c, k(.7)], mudo: [[120, 40, 50], [60, 30, 36]] }[e];
+}
 const formaAtual = () => { const f = document.getElementById('app').dataset.forma; return PALETA_FORMA[f] ? f : 'orbe'; };
 // o corpo de cada forma, no espaço do próprio Jarvis (y para baixo); devolve [x, y, z]
 function formaPonto(fm, p, t) {
@@ -669,7 +675,8 @@ function fpsAlvo() {
 function quadro(agora) {
   if (agora - tAnt < 1000 / fpsAlvo() - 3) { requestAnimationFrame(quadro); return; }
   const dt = Math.min(.05, (agora - tAnt) / 1000); tAnt = agora;
-  const fm = formaAtual(), e = S.mudo ? 'mudo' : estadoVisual(), alvo = ALVO[e], pal = (PALETA_FORMA[fm] || PALETA)[e], k = 1 - Math.pow(.02, dt);
+  const fm = formaAtual(), e = S.mudo ? 'mudo' : estadoVisual(), alvo = ALVO[e], corJ = document.getElementById('app').dataset.corJarvis,
+    pal = /^#[0-9a-f]{6}$/i.test(corJ || '') ? paletaDaCor(corJ, e) : (PALETA_FORMA[fm] || PALETA)[e], k = 1 - Math.pow(.02, dt);
   for (const c of ['vel', 'amp', 'raio', 'espalha']) V[c] += (alvo[c] - V[c]) * k;
   for (let i = 0; i < 3; i++) { V.cor1[i] += (pal[0][i] - V.cor1[i]) * k; V.cor2[i] += (pal[1][i] - V.cor2[i]) * k; }
   let nv = 0;
