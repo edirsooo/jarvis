@@ -1195,15 +1195,15 @@ class Jarvis:
         """Roupa do mago e tema da tela. A tela desenha o mago e manda as poses prontas; a esfera flutuante só as copia."""
         if req.method == "POST":
             d = await req.json()
-            for k in ("roupa", "tema", "tam", "mini_sempre", "forma", "cenario", "cor", "cor_jarvis", "corpo"):
+            for k in ("roupa", "tema", "tam", "mini_sempre", "forma", "cenario", "cor", "cor_jarvis", "corpo", "pers"):
                 if k in d:
                     VISUAL[k] = d[k]
             if isinstance(d.get("poses"), dict):
                 VISUAL["poses"] = d["poses"]
             VISUAL["v"] = int(time.time() * 1000) % 10 ** 9
             _gravar_json(ARQ_VISUAL, VISUAL)
-            if any(k in d for k in ("roupa", "tema", "forma", "cenario", "cor", "cor_jarvis", "corpo")):      # as outras telas abertas trocam junto
-                self.enviar(t="visual", v={k: VISUAL.get(k) for k in ("roupa", "tema", "tam", "mini_sempre", "forma", "cenario", "cor", "cor_jarvis", "corpo")})
+            if any(k in d for k in ("roupa", "tema", "forma", "cenario", "cor", "cor_jarvis", "corpo", "pers")):      # as outras telas abertas trocam junto
+                self.enviar(t="visual", v={k: VISUAL.get(k) for k in ("roupa", "tema", "tam", "mini_sempre", "forma", "cenario", "cor", "cor_jarvis", "corpo", "pers")})
         cheio = req.query.get("poses") == "1"
         return web.json_response({k: v for k, v in VISUAL.items() if cheio or k != "poses"})
 

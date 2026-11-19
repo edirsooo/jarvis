@@ -17,7 +17,18 @@
   const ROUPAS = [['torre', 'Mago da torre'], ['grimorio', 'Sábio'], ['cristal', 'Arcanista'], ['rpg', 'Aprendiz'],
     ['cavaleiro', 'Cavaleiro'], ['patrulheiro', 'Patrulheiro'], ['necro', 'Necromante']];
   const TEMAS = [['abismo', 'Abismo', '#c9a35a'], ['classico', 'Clássico', '#ff6b1a'], ['torre', 'Torre', '#c9772b'], ['grimorio', 'Grimório', '#5fa56f'], ['cristal', 'Cristal', '#8f6bff'], ['rpg', 'RPG', '#3f7bff']];
-  const V = { roupa: 'torre', tema: 'abismo', tam: 1, mini_sempre: false, forma: 'orbe', cenario: 'ruinas', cor: '', cor_jarvis: '', corpo: 'voxel' };
+  const V = { roupa: 'torre', tema: 'abismo', tam: 1, mini_sempre: false, forma: 'orbe', cenario: 'ruinas', cor: '', cor_jarvis: '', corpo: 'voxel', pers: null };
+  // personagem do mago: quem usa escolhe o corpo, a pele, o cabelo, a barba e a cor da roupa (a classe continua dando o chapéu e a arma)
+  const PERS0 = { tipo: 'm', pele: '#c68a5e', cabelo: 'longo', cor_cabelo: '#3b2416', barba: 'nenhuma', roupa_cor: '' };
+  const PERS_OP = {
+    tipo: [['h', 'Homem'], ['m', 'Mulher']],
+    pele: [['#f2d0b4', 'Clara'], ['#e0aa82', 'Morena clara'], ['#c68a5e', 'Morena'], ['#b97f56', 'Parda'], ['#8d5a3b', 'Negra'], ['#5e3a26', 'Retinta']],
+    cabelo: [['curto', 'Curto'], ['cacheado', 'Cacheado'], ['longo', 'Longo'], ['raspado', 'Raspado']],
+    cor_cabelo: [['#1a1210', 'Preto'], ['#3b2416', 'Castanho'], ['#7a4a26', 'Castanho claro'], ['#c98a3a', 'Loiro'], ['#a8401e', 'Ruivo'], ['#c9c4bc', 'Grisalho']],
+    barba: [['nenhuma', 'Sem barba'], ['curta', 'Curta'], ['cheia', 'Cheia']],
+  };
+  const pers = () => Object.assign({}, PERS0, V.pers || {});
+  const hexK = (hex, k) => '#' + [16, 8, 0].map((s) => (Math.max(0, Math.min(255, ((parseInt(hex.slice(1), 16) >> s) & 255) * k)) | 0).toString(16).padStart(2, '0')).join('');
   const CORES = [['', 'Do tema'], ['#c9a35a', 'Ouro'], ['#ff6b1a', 'Brasa'], ['#d0574a', 'Sangue'], ['#58c48d', 'Esmeralda'], ['#5ad7ff', 'Gelo'], ['#9a7bff', 'Arcano'], ['#ff7ac8', 'Rosa']];
 
   // ----- desenho voxel: caixas [x, y, z, largura, altura, fundo, cor, flag]; x para a direita, y para cima, z para o fundo -----
@@ -90,13 +101,16 @@
   };
   const LARG = 15, topoDe = (k) => (R[k] || R.torre).topo;
   function mago(p, t, k) {
-    const o = R[k] || R.torre, b = mk(), by = (p.senta ? -1 : 0) + Math.max(0, p.bob);
+    const pz = pers(), PELE = pz.pele, CABELO = pz.cor_cabelo, BARBA = pz.cor_cabelo, b = mk(), by = (p.senta ? -1 : 0) + Math.max(0, p.bob);
+    let o = R[k] || R.torre;
+    if (/^#[0-9a-f]{6}$/i.test(pz.roupa_cor || '')) o = Object.assign({}, o, { roupa: pz.roupa_cor, roupa2: hexK(pz.roupa_cor, 0.74) });
     // pernas e botas (o manto cobre a parte de cima)
     if (p.senta && p.beira) [-3, 0.8].forEach((x) => { b(x, 0, -1.6, 2.2, 2, 3.6, o.roupa2); b(x, -2.4, -1.6, 2.2, 2.4, 1.6, o.roupa2, 1); b(x, -3.3, -2.2, 2.2, 0.9, 2.2, o.bota, 1); });
     else if (p.senta) { b(-3, 0, -1, 2.2, 2, 3, o.roupa2); b(0.8, 0, -1, 2.2, 2, 3, o.roupa2); b(-3, 0, -2, 2.2, 2.4, 1, o.bota); b(0.8, 0, -2, 2.2, 2.4, 1, o.bota); }
     else [[-3, p.pe], [0.8, p.pd]].forEach(([x, l]) => { l = Math.min(1.2, l); b(x, 1 + l, 1, 2.2, 2 - l, 3, o.roupa2); b(x, l, 0.2, 2.2, 1, 3.8, o.bota); });
     b.em(0, by, 0);
     if (!p.senta) { b(-4, 1.6, 0.3, 8, 1.6, 4.6, o.roupa); b(-4, 1.6, 0.1, 8, 0.5, 0.2, o.borda); }      // barra do manto
+    if (pz.tipo === 'm' && !p.senta) { b(-4.7, 0.9, -0.1, 9.4, 1.2, 5.4, o.roupa); b(-4.7, 0.9, -0.3, 9.4, 0.45, 0.2, o.borda); }   // vestido: barra mais rodada
     b(-3.5, 3, 0.6, 7, 5, 4, o.roupa);
     b(-3.6, 3.7, 0.4, 7.2, 0.8, 0.2, o.cinto); b(-0.7, 3.6, 0.25, 1.4, 1, 0.15, o.borda);                // cinto e fivela
     b(-0.5, 4.7, 0.4, 1, 3.3, 0.2, o.borda);                                                               // faixa da frente
@@ -119,14 +133,18 @@
         b(cx - 0.55, y0 + 14.6, cz - 0.55, 1.9, 1.9, 1.9, g, 2); b(cx - 0.1, y0 + 16.5, cz - 0.1, 1, 0.7, 1, g, 2);
       }
     }
-    // cabeça, barba e cabelo cacheado
+    // cabeça, barba (cheia, curta ou sem) e cabelo do personagem
     b(-5, 8, -0.6, 10, 7.2, 6.6, PELE);
-    b(-3.7, 8, -0.85, 7.4, 2.1, 0.25, BARBA); b(-5, 8.6, -0.85, 1.3, 3.4, 0.25, BARBA); b(3.7, 8.6, -0.85, 1.3, 3.4, 0.25, BARBA); b(-1.9, 10, -0.95, 3.8, 0.5, 0.15, BARBA);
-    b(-2.2, 7.3, -0.75, 4.4, 0.7, 1.2, BARBA);
+    if (pz.barba === 'cheia') { b(-3.7, 8, -0.85, 7.4, 2.1, 0.25, BARBA); b(-5, 8.6, -0.85, 1.3, 3.4, 0.25, BARBA); b(3.7, 8.6, -0.85, 1.3, 3.4, 0.25, BARBA); }
+    if (pz.barba !== 'nenhuma') { b(-1.9, 10, -0.95, 3.8, 0.5, 0.15, BARBA); b(-2.2, 7.3, -0.75, 4.4, 0.7, 1.2, BARBA); }
     olhos(b, p, 2.4, 10.9, -0.6, 1.5, '#1a120e');
+    if (pz.tipo === 'm' && p.olho !== 'fechado') [-1, 1].forEach((s) => b(s * 3.15 - 0.3, 12.15, -1.15, 0.6, 0.55, 0.2, '#1a120e'));   // cílios
+    if (pz.tipo === 'm') [-1, 1].forEach((s) => b(s * 3.4 - 0.65, 9.55, -0.9, 1.3, 0.55, 0.15, '#e8848c'));   // bochechas
     b(-3.4, 12.75, -0.75, 2, 0.4, 0.15, CABELO); b(1.4, 12.75, -0.75, 2, 0.4, 0.15, CABELO);                // sobrancelhas
-    boca(b, p, 8.9, -0.95, '#f3d9c4');
-    b(-4.5, 13.7, -1, 2.3, 1.3, 0.5, CABELO); b(-1.9, 14.1, -1, 2.3, 1, 0.5, CABELO); b(0.8, 13.6, -1, 2.1, 1.4, 0.5, CABELO); b(3, 14, -1, 1.6, 1.1, 0.5, CABELO);
+    boca(b, p, 8.9, -0.95, pz.barba === 'cheia' ? '#f3d9c4' : pz.tipo === 'm' ? '#b8435a' : hexK(PELE, 0.55));
+    if (pz.cabelo === 'cacheado') { b(-4.5, 13.7, -1, 2.3, 1.3, 0.5, CABELO); b(-1.9, 14.1, -1, 2.3, 1, 0.5, CABELO); b(0.8, 13.6, -1, 2.1, 1.4, 0.5, CABELO); b(3, 14, -1, 1.6, 1.1, 0.5, CABELO); }
+    else if (pz.cabelo === 'curto') b(-4.8, 13.9, -1, 9.6, 1.1, 0.5, CABELO);
+    else if (pz.cabelo === 'longo') { b(-4.8, 13.9, -1, 4.3, 1.1, 0.5, CABELO); b(0.5, 13.9, -1, 4.3, 1.1, 0.5, CABELO); b(-5.5, 7.2, -1, 1.3, 6.8, 0.5, CABELO); b(4.2, 7.2, -1, 1.3, 6.8, 0.5, CABELO); }   // franja repartida e mechas dos lados do rosto
     if (o.cab === 'elmo') {
       b(-5.6, 13.4, -1.2, 11.2, 2.8, 7.8, o.metal); b(-4.4, 16.2, -0.4, 8.8, 1.2, 6.2, o.metal);
       b(-6, 8.2, -1, 1.3, 5.4, 7.4, o.metal); b(4.7, 8.2, -1, 1.3, 5.4, 7.4, o.metal); b(-5.4, 8, 5.8, 10.8, 6, 1.4, o.metal);
@@ -140,7 +158,8 @@
       b(-3.6, 17.4, 1.4, 7.2, 1.4, 5.2, o.roupa); b(-1.9, 18.8, 3, 3.8, 1.3, 3.2, o.roupa); b(-0.3, 20.1, 4.6, 1.7, 1.2, 1.6, o.roupa2);
       if (o.cristais) { b(-7.4, 12.5, 1.5, 0.8, 2.4, 1.2, o.cristais); b(6.7, 10.5, 2.4, 0.8, 2, 1.2, o.cristais); b(-0.6, 16.2, -1.75, 1.2, 1.2, 0.2, o.borda); }
     } else {
-      b(-6.2, 8.4, 0.6, 1.3, 6.8, 5.2, CABELO); b(4.9, 8.4, 0.6, 1.3, 6.8, 5.2, CABELO); b(-5.4, 8, 6, 10.8, 7.4, 1.3, CABELO);
+      if (pz.cabelo === 'longo') { b(-6.2, 4.6, 0.6, 1.3, 10.6, 5.2, CABELO); b(4.9, 4.6, 0.6, 1.3, 10.6, 5.2, CABELO); b(-5.4, 4.4, 6, 10.8, 11, 1.3, CABELO); }
+      else if (pz.cabelo !== 'raspado') { b(-6.2, 8.4, 0.6, 1.3, 6.8, 5.2, CABELO); b(4.9, 8.4, 0.6, 1.3, 6.8, 5.2, CABELO); b(-5.4, 8, 6, 10.8, 7.4, 1.3, CABELO); }
       b(-7.6, 15.2, -2.6, 15.2, 0.9, 10.6, o.roupa);                                                         // aba
       b(-4.4, 16.1, -0.3, 8.8, 1.2, 6, o.borda);                                                             // fita
       b(-4.2, 17.3, 0, 8.4, 2, 5.6, o.roupa); b(-3, 19.3, 0.8, 6, 1.9, 4.2, o.roupa); b(-1.8, 21.2, 1.8, 3.8, 1.8, 3, o.roupa); b(-0.4, 23, 3, 2, 1.4, 1.8, o.roupa2); b(0.9, 24.2, 3.4, 1.5, 1, 1.4, o.roupa2);
@@ -494,7 +513,7 @@
     else { a.style.removeProperty('--destaque'); a.style.removeProperty('--tinta'); }
   }
   function grava(extra) {
-    fetch('/api/visual', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(Object.assign({ roupa: V.roupa, tema: V.tema, tam: V.tam, mini_sempre: !!V.mini_sempre, forma: V.forma, cenario: V.cenario, cor: V.cor, cor_jarvis: V.cor_jarvis, corpo: V.corpo, poses: poses() }, extra || {})) }).catch(() => {});
+    fetch('/api/visual', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(Object.assign({ roupa: V.roupa, tema: V.tema, tam: V.tam, mini_sempre: !!V.mini_sempre, forma: V.forma, cenario: V.cenario, cor: V.cor, cor_jarvis: V.cor_jarvis, corpo: V.corpo, pers: pers(), poses: poses() }, extra || {})) }).catch(() => {});
   }
   function aplica(v, deFora) {
     if (v.roupa && R[v.roupa]) V.roupa = v.roupa;
@@ -506,6 +525,13 @@
     if ('cor_jarvis' in v && (v.cor_jarvis === '' || /^#[0-9a-f]{6}$/i.test(v.cor_jarvis || ''))) V.cor_jarvis = v.cor_jarvis || '';
     if (v.cenario && (window.CENARIOS || []).some((x) => x[0] === v.cenario)) V.cenario = v.cenario;
     if (v.corpo && (window.CORPOS || []).some((x) => x[0] === v.corpo)) V.corpo = v.corpo;
+    if (v.pers && typeof v.pers === 'object') {
+      const n = Object.assign({}, pers());
+      for (const [c, ops] of Object.entries(PERS_OP)) if (v.pers[c] && (ops.some((x) => x[0] === v.pers[c]) || (c === 'pele' || c === 'cor_cabelo') && /^#[0-9a-f]{6}$/i.test(v.pers[c]))) n[c] = v.pers[c];
+      if ('roupa_cor' in v.pers && (v.pers.roupa_cor === '' || /^#[0-9a-f]{6}$/i.test(v.pers.roupa_cor || ''))) n.roupa_cor = v.pers.roupa_cor || '';
+      V.pers = n;
+      document.querySelectorAll('#visual [data-roupa] canvas').forEach((c) => retrato(c, c.parentNode.dataset.roupa));
+    }
     tema(); if (el) mede();
     if (!deFora) grava();
     marca();
@@ -520,6 +546,7 @@
     const livre = q('#visual .vis-cores.destaque input[type=color]'); if (livre && V.cor) livre.value = V.cor;
     const livreJ = q('#visual .vis-cores.jarvis input[type=color]'); if (livreJ && V.cor_jarvis) livreJ.value = V.cor_jarvis;
     document.querySelectorAll('#visual [data-corpo]').forEach((b) => b.classList.toggle('on', b.dataset.corpo === V.corpo));
+    const pz = pers(); document.querySelectorAll('#visual [data-pk]').forEach((b) => b.classList.toggle('on', pz[b.dataset.pk] === b.dataset.pv));
     document.querySelectorAll('#visual [data-tam]').forEach((b) => b.classList.toggle('on', +b.dataset.tam === +V.tam));
     document.querySelectorAll('#visual [data-mini]').forEach((b) => b.classList.toggle('on', (b.dataset.mini === '1') === !!V.mini_sempre));
   }
@@ -541,6 +568,12 @@
         </section>
         <section data-pag="mago" hidden>
           <h2>CLASSE</h2><div class="vis-roupas">${ROUPAS.map(([k, n]) => `<button data-roupa="${k}"><canvas width="120" height="132"></canvas><span>${n}</span></button>`).join('')}</div>
+          <h2>PERSONAGEM</h2><div class="vis-temas grade dupla">${PERS_OP.tipo.map(([k, n]) => `<button data-pk="tipo" data-pv="${k}">${n}</button>`).join('')}</div>
+          <h2>PELE</h2><div class="vis-temas grade vis-cores">${PERS_OP.pele.map(([c, n]) => chip('data-pk="pele" data-pv', c, n, c)).join('')}</div>
+          <h2>CABELO</h2><div class="vis-temas grade dupla">${PERS_OP.cabelo.map(([k, n]) => `<button data-pk="cabelo" data-pv="${k}">${n}</button>`).join('')}</div>
+          <h2>COR DO CABELO</h2><div class="vis-temas grade vis-cores">${PERS_OP.cor_cabelo.map(([c, n]) => chip('data-pk="cor_cabelo" data-pv', c, n, c)).join('')}</div>
+          <h2>BARBA</h2><div class="vis-temas grade tres">${PERS_OP.barba.map(([k, n]) => `<button data-pk="barba" data-pv="${k}">${n}</button>`).join('')}</div>
+          <h2>COR DA ROUPA</h2>${cores('data-pk="roupa_cor" data-pv', [['', 'Da classe', 'linear-gradient(135deg,#4b2f8f 50%,#2f6b45 50%)'], ['#4b2f8f', 'Roxo'], ['#2b63d9', 'Azul'], ['#2f6b45', 'Verde'], ['#9b2a24', 'Vinho'], ['#c9a35a', 'Ouro'], ['#d8d2c4', 'Branco'], ['#1c1a22', 'Preto']], '#4b2f8f', 'roupa')}
           <h2>TAMANHO</h2><div class="vis-temas grade tres">${[[0.8, 'Pequeno'], [1, 'Médio'], [1.35, 'Grande']].map(([v, n]) => `<button data-tam="${v}">${n}</button>`).join('')}</div>
           <small>Clique em qualquer ponto livre da tela e ele vai até lá (pula sozinho para cima dos quadros). Clique nele para um carinho. Segure e arraste para carregar. Segure o botão em outro lugar e ele corre atrás do cursor.</small>
         </section>
@@ -560,6 +593,7 @@
           return;
         }
         if (b.dataset.atualiza) { m.hidden = true; if (window.janelaAtualiza) janelaAtualiza(); return; }
+        if (b.dataset.pk) { const n = { [b.dataset.pk]: b.dataset.pv }; if (b.dataset.pk === 'tipo' && b.dataset.pv === 'm') n.barba = 'nenhuma'; aplica({ pers: n }); festa(0.7); return; }
         if (b.dataset.corpo) aplica({ corpo: b.dataset.corpo });
         else if (b.dataset.roupa) { aplica({ roupa: b.dataset.roupa }); festa(1); diz(um(F.roupa)); }
         else if (b.dataset.tema) aplica({ tema: b.dataset.tema });
@@ -572,6 +606,7 @@
       });
       m.querySelector('.vis-cores.destaque input[type=color]').addEventListener('input', (e) => aplica({ cor: e.target.value }));
       m.querySelector('.vis-cores.jarvis input[type=color]').addEventListener('input', (e) => aplica({ cor_jarvis: e.target.value }));
+      m.querySelector('.vis-cores.roupa input[type=color]').addEventListener('input', (e) => aplica({ pers: { roupa_cor: e.target.value } }));
       document.addEventListener('pointerdown', (e) => { if (!m.hidden && !e.target.closest('#visual,#btVisual,.mago-hit')) m.hidden = true; }, true);
       addEventListener('keydown', (e) => { if (e.key === 'Escape') m.hidden = true; });
     }

@@ -90,7 +90,7 @@ try:
         cor = pg.evaluate("() => getComputedStyle(document.getElementById('app')).getPropertyValue('--laranja').trim()")
         confere("cor de destaque vale por cima do tema", cor == "#58c48d", cor)
         pg.click("#btVisual"); pg.wait_for_timeout(400)
-        confere("menu tem cor de destaque, cor do Jarvis e as duas cores livres", pg.locator("#visual [data-cor]").count() >= 7 and pg.locator("#visual input[type=color]").count() == 2 and pg.locator("#visual [data-corj]").count() >= 8)
+        confere("menu tem cor de destaque, cor do Jarvis e as cores livres (destaque, Jarvis e roupa)", pg.locator("#visual [data-cor]").count() >= 7 and pg.locator("#visual input[type=color]").count() == 3 and pg.locator("#visual [data-corj]").count() >= 8)
         pg.screenshot(path=os.path.join(FOTOS, "cor_esmeralda.png")); pg.keyboard.press("Escape")
         time.sleep(0.5)
         confere("cor guardada no servidor", get("/api/visual").get("cor") == "#58c48d")
@@ -118,6 +118,14 @@ try:
         pg.mouse.move(caixa["x"] + 190, caixa["y"] + 190); pg.wait_for_timeout(900)
         pg.screenshot(path=os.path.join(FOTOS, "fantasma_carinho.png"), clip=caixa)
         confere("estilo do corpo guardado", (time.sleep(0.4) or get("/api/visual")).get("corpo") == "liso")
+        # personagem do mago: escolhas no menu viram o desenho e ficam guardadas
+        pg.evaluate("() => MAGO.menu(true)"); pg.click("#visual [data-aba=mago]"); pg.wait_for_timeout(200)
+        antes = pg.evaluate("() => document.querySelector('#visual [data-roupa=torre] canvas').toDataURL()")
+        pg.click('#visual [data-pk=tipo][data-pv=h]'); pg.click('#visual [data-pk=barba][data-pv=cheia]'); pg.click('#visual [data-pk=pele][data-pv="#5e3a26"]'); pg.wait_for_timeout(300)
+        depois = pg.evaluate("() => document.querySelector('#visual [data-roupa=torre] canvas').toDataURL()")
+        ps = (time.sleep(0.4) or get("/api/visual")).get("pers") or {}
+        confere("personagem do mago muda o desenho e fica guardado", antes != depois and ps.get("tipo") == "h" and ps.get("barba") == "cheia" and ps.get("pele") == "#5e3a26", str(ps))
+        pg.evaluate("() => MAGO.menu(false)")
         pg.mouse.move(5, 880)
         pg.evaluate("() => MAGO.aplica({forma: 'orbe', corpo: 'cubos'})"); pg.wait_for_timeout(300)
         # aviso de atualização (o servidor finge 2 novidades): botão no topo, janela com a lista e atualizar
