@@ -466,8 +466,8 @@ footer{min-width:0;overflow:hidden;display:flex;align-items:center;gap:16px;padd
 #app[data-tema="abismo"] .bt.forte,#app[data-tema="abismo"] .pj .forte,#app[data-tema="abismo"] .proc-bt .rodar,#app[data-tema="abismo"] #galFiltros button.on{
   background:linear-gradient(color-mix(in srgb,var(--ouro) 85%,#fff),color-mix(in srgb,var(--ouro) 75%,#000));border-color:color-mix(in srgb,var(--ouro) 60%,#fff);color:#1c1006;text-shadow:0 1px 0 #ffffff40;box-shadow:inset 0 1px 0 #fff6,0 0 14px #e0a24a40,0 2px 0 #000}
 #app[data-tema="abismo"] .bt.forte:hover,#app[data-tema="abismo"] .proc-bt .rodar:hover{animation:brasaBt 1.4s ease-in-out infinite}
-#app[data-tema="abismo"] button.perigo{border-color:#7a3a30}
-#app[data-tema="abismo"] button.perigo:hover{background:linear-gradient(#5a1e18,#3a120e);color:#ffd8d0;border-color:#d0574a}
+#app[data-tema="abismo"] button.perigo,#app[data-tema="abismo"] .m-botoes .parar{border-color:#7a3a30;color:#f3d2cc}
+#app[data-tema="abismo"] button.perigo:hover,#app[data-tema="abismo"] .m-botoes .parar:hover{background:linear-gradient(#5a1e18,#3a120e);color:#ffd8d0;border-color:#d0574a}
 #app[data-tema="abismo"] .perigo.armado{background:linear-gradient(#a8352a,#6a1c14);border-color:#ff8a7a;color:#fff}
 /* painéis com cantos de ouro */
 #app[data-tema="abismo"] .bloco,#app[data-tema="abismo"] .missao,#app[data-tema="abismo"] .proc,#app[data-tema="abismo"] .hist,#app[data-tema="abismo"] .conv,#app[data-tema="abismo"] .pj{
