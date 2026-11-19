@@ -541,3 +541,23 @@ header button,#vistas button{white-space:nowrap}
 #visual button.on{border-color:var(--ouro)!important;color:var(--texto);box-shadow:0 0 0 1px var(--ouro),0 0 14px color-mix(in srgb,var(--ouro) 35%,transparent)!important}
 #visual{max-height:calc(100% - 100px);overflow:auto}
 @media (prefers-reduced-motion:reduce){#saudacao,#saudacao::after,#app[data-tema="abismo"] .cubo{animation:none}}
+
+/* ---------- chat de jogo (pedido de 19/11/2026): barra fina embaixo e a fala do Jarvis numa caixa de diálogo ---------- */
+#app footer{height:54px;padding:8px 18px;gap:14px}
+#app footer #mic{width:36px;height:36px;font-size:15px;box-shadow:2px 2px 0 #000}
+#app footer #form{order:1;flex:0 1 560px;min-width:220px;display:flex;align-items:stretch;height:36px;
+  background:#000000b8;border:1px solid color-mix(in srgb,var(--dlg-borda) 55%,transparent);box-shadow:0 0 0 2px #0008,inset 0 0 0 1px #ffffff08}
+#app footer #form:focus-within{border-color:var(--dlg-borda);box-shadow:0 0 0 2px #0008,0 0 12px color-mix(in srgb,var(--dlg-borda) 35%,transparent)}
+#app footer #form label{flex:none;display:flex;align-items:center;padding:0 10px;font:700 11px/1 var(--mono);letter-spacing:.12em;text-transform:uppercase;
+  color:#0b0908;background:var(--dlg-borda)}
+#app footer #form label::after{content:"▸";margin-left:6px}
+#app footer #form #campo{flex:1;height:100%;border:0;background:transparent;box-shadow:none;padding:0 12px;font:500 14px/1 var(--mono);color:#f2ead8}
+#app footer #form #campo::placeholder{color:#a8987f99}
+#app footer #rodape{order:2;font-size:12px} #app footer #info{order:3;margin-left:auto}
+#app[data-tema="grimorio"] footer #form{background:#efe2c2e8} #app[data-tema="grimorio"] footer #form #campo{color:#2a1d10}
+#app:not(.trabalho) #legenda:not(:empty){max-width:min(640px,88%);padding:24px 26px 20px;font:600 clamp(16px,1.3vw,21px)/1.45 var(--serif);color:var(--dlg-texto);
+  box-shadow:0 0 0 3px #000000b0,0 0 0 4px color-mix(in srgb,var(--dlg-borda) 45%,transparent),inset 0 0 0 4px #0006,0 14px 40px #000c}
+#app:not(.trabalho) #legenda:not(:empty)::before{content:"JARVIS";position:absolute;top:-12px;left:22px;padding:4px 12px;background:#0a0807;border:1px solid var(--dlg-borda);
+  font:600 11px/1 var(--serif);letter-spacing:.32em;color:var(--dlg-borda)}
+#app:not(.trabalho) #legenda:not(:empty)::after{content:"▼";position:absolute;right:14px;bottom:6px;font-size:10px;color:var(--dlg-borda);animation:dlgSeta 1.1s steps(2) infinite}
+@media (max-width:760px){#app footer #rodape{display:none}}

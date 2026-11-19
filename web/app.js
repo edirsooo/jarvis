@@ -143,10 +143,16 @@ function legendaSeguir(txt, tempoAgora, duracao, sozinha) {
   const passo = () => {
     const f = tempoAgora() / duracao();
     let i = 0; while (i + 1 < bl.length && f >= ini[i + 1]) i++;
-    if (i !== atual) { atual = i; $('#legenda').textContent = bl[i]; }
+    if (i !== atual) { atual = i; escreve(bl[i]); }
     if (sozinha && f >= 1) legendaParar();
   };
   passo(); legRelogio = setInterval(passo, 80);
+}
+let legTipo;
+function escreve(txt) {   // letra a letra, rápido (no máximo ~0,45 s por bloco), como diálogo de jogo
+  clearInterval(legTipo); const el = $('#legenda'); let n = 0; const passo = Math.max(1, Math.ceil(txt.length / 18));
+  el.textContent = '';
+  legTipo = setInterval(() => { n = Math.min(txt.length, n + passo); el.textContent = txt.slice(0, n); if (n >= txt.length) clearInterval(legTipo); }, 25);
 }
 function legendaParar() {   // para de trocar e deixa o último bloco na tela por um tempo
   clearInterval(legRelogio); clearTimeout(legSome);

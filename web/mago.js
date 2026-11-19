@@ -559,7 +559,7 @@
       const chip = (attr, k, n, fundo) => `<button ${attr}="${k}"><i class="amostra" style="background:${fundo}"></i>${n}</button>`;
       const cores = (attr, lista, livre, qual) => `<div class="vis-temas grade vis-cores ${qual}">${lista.map(([c, n, f]) => chip(attr, c, n, f || c)).join('')}<label class="vis-livre"><input type="color" value="${livre}">Outra cor</label></div>`;
       m.innerHTML = `<div class="vis-cab"><b>Aparência</b><span>Escolhas guardadas para a próxima vez</span></div>
-        <nav class="vis-abas"><button data-aba="jarvis" class="on">Jarvis</button><button data-aba="mago">Mago</button><button data-aba="tela">Tela</button></nav>
+        <nav class="vis-abas"><button data-aba="jarvis" class="on">Jarvis</button><button data-aba="mago">Personagem</button><button data-aba="tela">Tela</button></nav>
         <section data-pag="jarvis">
           <h2>FORMA</h2><div class="vis-temas grade">${(window.FORMAS || []).map(([k, n]) => chip('data-forma', k, n, ICONE[k] || '#888')).join('')}</div>
           <h2>ESTILO DO CORPO</h2><div class="vis-temas grade">${(window.CORPOS || []).map(([k, n]) => chip('data-corpo', k, n, CORPO_ICO[k] || '#888')).join('')}</div>
@@ -568,7 +568,7 @@
         </section>
         <section data-pag="mago" hidden>
           <h2>CLASSE</h2><div class="vis-roupas">${ROUPAS.map(([k, n]) => `<button data-roupa="${k}"><canvas width="120" height="132"></canvas><span>${n}</span></button>`).join('')}</div>
-          <h2>PERSONAGEM</h2><div class="vis-temas grade dupla">${PERS_OP.tipo.map(([k, n]) => `<button data-pk="tipo" data-pv="${k}">${n}</button>`).join('')}</div>
+          <h2>CORPO</h2><div class="vis-temas grade dupla">${PERS_OP.tipo.map(([k, n]) => `<button data-pk="tipo" data-pv="${k}">${n}</button>`).join('')}</div>
           <h2>PELE</h2><div class="vis-temas grade vis-cores">${PERS_OP.pele.map(([c, n]) => chip('data-pk="pele" data-pv', c, n, c)).join('')}</div>
           <h2>CABELO</h2><div class="vis-temas grade dupla">${PERS_OP.cabelo.map(([k, n]) => `<button data-pk="cabelo" data-pv="${k}">${n}</button>`).join('')}</div>
           <h2>COR DO CABELO</h2><div class="vis-temas grade vis-cores">${PERS_OP.cor_cabelo.map(([c, n]) => chip('data-pk="cor_cabelo" data-pv', c, n, c)).join('')}</div>
