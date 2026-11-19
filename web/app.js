@@ -63,7 +63,7 @@ function ligar() {
         Object.assign(S, { estado: m.estado, mudo: m.mudo, missoes: m.missoes, painel: m.painel, xp: m.xp, cotas: m.cotas, dono: m.dono || '' });
         $('#nome').textContent = (m.nome || 'Jarvis').toUpperCase();
         $('#info').textContent = `${m.info.mic} · ${m.info.stt}` + (m.info.cerebro === 'local' ? ' · cérebro local' : '');
-        S.info = m.info; S.agenda = m.agenda || []; etiquetas();
+        S.info = m.info; S.agenda = m.agenda || []; etiquetas(); atualizacao(m.atualizacao, true);
         const u = [...m.conversa].reverse().find(c => c.quem === 'voce');
         if (u) ultima(u.txt);
         estado(); cartoes(); painel(); xp(); cotas(); break;
@@ -79,6 +79,7 @@ function ligar() {
       case 'fala': filaVoz.push(m); tocarProxima(); break;
       case 'calar': calar(); break;
       case 'visual': if (window.MAGO) MAGO.aplica(m.v, true); break;
+      case 'atualizacao': atualizacao(m.v); break;
       case 'missoes': antes = S.missoes; S.missoes = m.v; cartoes(); if (S.painel) painel(true); avisar(antes); break;
       case 'painel': S.painel = m.v; painel(); SONS.clique(); break;
       case 'xp': S.xp = m.v; xp(); break;
@@ -403,6 +404,45 @@ function aviso(titulo, txt, aoClicar, erro) {
   a.onclick = () => { if (aoClicar) aoClicar(); a.remove(); };
   $('#avisos').append(a); setTimeout(() => a.remove(), erro ? 15000 : 9000);
 }
+// atualização no GitHub: botão no topo e um aviso uma vez por versão; a janela mostra as novidades e atualiza com um clique
+let atuVista = '';
+function atualizacao(a, calado) {
+  S.atu = a || {};
+  const n = S.atu.atras || 0, bt = $('#btAtualiza');
+  bt.hidden = !n; bt.textContent = n ? `⬆ Atualizar (${n})` : '';
+  const chave = n + '|' + (S.atu.novidades || [])[0];
+  if (n && chave !== atuVista) { atuVista = chave; aviso('ATUALIZAÇÃO DISPONÍVEL', `${n} novidade${n > 1 ? 's' : ''} no GitHub. Clique para ver e atualizar.`, janelaAtualiza); }
+  if (!$('#atualiza').hidden) janelaAtualiza(true);
+}
+function postAtualiza(acao) {
+  return fetch('/api/atualizacao', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ acao }) }).then(r => r.json());
+}
+function janelaAtualiza(soRedesenha) {
+  const j = $('#atualiza'), a = S.atu || {}, n = a.atras || 0;
+  if (soRedesenha !== true) j.hidden = !j.hidden || false;
+  const msgVelha = j.querySelector('.atu-msg'), txtVelho = msgVelha ? msgVelha.textContent : '', erroVelho = msgVelha && msgVelha.classList.contains('erro');
+  j.innerHTML = `<div class="vis-cab"><b>Atualização</b><span>${a.versao ? 'Você está na versão ' + esc(a.versao) : ''}</span></div>
+    ${n ? `<p>Tem <b>${n} novidade${n > 1 ? 's' : ''}</b> no GitHub:</p><ul>${(a.novidades || []).map(x => `<li>${esc(x)}</li>`).join('')}</ul>` : `<p>${a.erro ? esc(a.erro) : a.checado ? 'Você já está na versão mais nova.' : 'Procurando versão nova…'}</p>`}
+    <div class="atu-botoes">${n ? '<button class="bt forte" data-acao="atualizar">Atualizar agora</button>' : '<button class="bt" data-acao="checar">Procurar de novo</button>'}
+    ${a.url ? '<button class="bt" data-acao="ver">Ver no GitHub</button>' : ''}<button class="bt" data-acao="fechar">Fechar</button></div>
+    <small>Atualizar baixa a versão nova (git pull) e reinicia o Jarvis sozinho em poucos segundos. Missões rodando precisam terminar antes.</small>
+    <div class="atu-msg"></div>`;
+  if (txtVelho) { const m = j.querySelector('.atu-msg'); m.textContent = txtVelho; m.classList.toggle('erro', erroVelho); }
+  j.querySelectorAll('[data-acao]').forEach(b => b.onclick = () => {
+    const ac = b.dataset.acao, msg = { set textContent(v) { j.querySelector('.atu-msg').textContent = v; }, classList: { add: (c) => j.querySelector('.atu-msg').classList.add(c) } };
+    if (ac === 'fechar') { j.hidden = true; return; }
+    b.disabled = true; msg.textContent = ac === 'atualizar' ? 'Baixando a versão nova…' : ac === 'checar' ? 'Procurando…' : '';
+    postAtualiza(ac).then(r => {
+      b.disabled = false;
+      if (ac === 'atualizar') {
+        if (!r.ok) { msg.textContent = r.erro || 'Não deu para atualizar.'; msg.classList.add('erro'); return; }
+        msg.textContent = r.reinicia ? 'Atualizado! O Jarvis está reiniciando e volta em instantes.' : 'Atualizado!';
+        SONS.acordar && SONS.acordar();
+      } else if (ac === 'checar') { S.atu = r; janelaAtualiza(true); if (!r.atras) j.querySelector('.atu-msg').textContent = r.erro ? '' : 'Nada novo por enquanto.'; }
+    }).catch(() => { b.disabled = false; msg.textContent = ac === 'atualizar' ? 'O Jarvis está reiniciando…' : 'Sem resposta do Jarvis.'; });
+  });
+  if (!a.checado && !n && soRedesenha !== true && !j.hidden) { const c = j.querySelector('[data-acao=checar]'); if (c) c.click(); }
+}
 function avisar(velhas) {
   S.missoes.forEach(m => {
     const v = velhas.find(x => x.n === m.n);
@@ -611,6 +651,74 @@ function paletaDaCor(hex, e) {
   const k = (f) => c.map((v) => Math.min(255, v * f)), claro = c.map((v) => v + (255 - v) * .55);
   return { dormindo: [k(.55), k(.3)], ouvindo: [c, claro], pensando: [claro, k(.75)], falando: [c, claro], trabalhando: [c, k(.7)], mudo: [[120, 40, 50], [60, 30, 36]] }[e];
 }
+// estilos do corpo: cubos 3D (o original), pixel (um quadrado por ponto, o mais leve), luz (partículas que brilham), liso (massinha)
+const CORPOS = [['cubos', 'Cubos 3D'], ['pixel', 'Pixel leve'], ['luz', 'Luz suave'], ['liso', 'Bolhas macias']];
+window.CORPOS = CORPOS;
+const corpoAtual = () => { const c = document.getElementById('app').dataset.corpo; return CORPOS.some((x) => x[0] === c) ? c : 'cubos'; };
+// luz: uma bolinha de brilho pronta por cor, refeita só quando a cor muda
+const SPR = [document.createElement('canvas'), document.createElement('canvas')];
+SPR.forEach((c) => { c.width = c.height = 48; });
+let sprChave = '';
+function prepSprites() {
+  const chave = V.cor1.map((v) => v >> 3).join() + '|' + V.cor2.map((v) => v >> 3).join();
+  if (chave === sprChave) return; sprChave = chave;
+  [V.cor1, V.cor2].forEach((cor, i) => {
+    const x = SPR[i].getContext('2d'), c = cor.map((v) => v | 0).join(), cl = cor.map((v) => (v + (255 - v) * .6) | 0).join();
+    const gr = x.createRadialGradient(24, 24, 0, 24, 24, 24);
+    gr.addColorStop(0, `rgba(${cl},1)`); gr.addColorStop(.3, `rgba(${c},.6)`); gr.addColorStop(1, `rgba(${c},0)`);
+    x.clearRect(0, 0, 48, 48); x.fillStyle = gr; x.fillRect(0, 0, 48, 48);
+  });
+}
+// rosto do fantasminha e da bola de fogo: olhos que seguem o mouse e piscam, sorriso no carinho, boca que fala
+const ROSTO = { piscaAte: 0, proxPisca: 2 };
+function bloco(x, y, w, h, redondo) {
+  g.beginPath();
+  if (g.roundRect) g.roundRect(x, y, w, h, redondo ? Math.min(w, h) / 2 : Math.min(w, h) * .22); else g.rect(x, y, w, h);
+  g.fill();
+}
+function rosto(cx, cy, R, t, e, redondo) {
+  if (t > ROSTO.proxPisca) { ROSTO.piscaAte = t + .12; ROSTO.proxPisca = t + 2.2 + Math.random() * 3.8; }
+  const pisca = t < ROSTO.piscaAte, tinta = 'rgba(14,16,30,.95)';
+  const perto = MOUSE.dentro && Math.hypot(MOUSE.x - cx, MOUSE.y - cy) < R * 1.15;      // mouse em cima: carinho
+  const feliz = perto || (e === 'falando' && V.nivel > .55);
+  const fx = cx + V.olhaX * R * .25, oy = V.olhaY * R * .16;      // o rosto vira para o cursor
+  const ex = R * .3, ey = cy - R * .06 + oy, w = R * .19;
+  let h = R * .28;
+  const claro = V.cor2.map((v) => (v + (255 - v) * .55) | 0).join(), fundo = g.createRadialGradient(fx, cy + oy, 0, fx, cy + oy, R * .72);
+  fundo.addColorStop(0, `rgba(${claro},.7)`); fundo.addColorStop(.6, `rgba(${claro},.35)`); fundo.addColorStop(1, `rgba(${claro},0)`);
+  g.fillStyle = fundo; g.beginPath(); g.ellipse(fx, cy + oy, R * .72, R * .6, 0, 0, 6.2832); g.fill();
+  g.fillStyle = tinta; g.strokeStyle = tinta; g.lineCap = 'round'; g.lineWidth = Math.max(2.5, R * .06);
+  if (feliz && e !== 'mudo') {                                  // ^ ^ (até dormindo ele sorri no carinho)
+    for (const s of [-1, 1]) { g.beginPath(); g.arc(fx + s * ex, ey + w * .25, w * .55, 1.15 * Math.PI, 1.85 * Math.PI); g.stroke(); }
+  } else if (e === 'dormindo' || e === 'mudo') {                // dormindo: olhos fechados em arco; mudo: risquinho
+    for (const s of [-1, 1]) {
+      g.beginPath();
+      if (e === 'dormindo') g.arc(fx + s * ex, ey - w * .2, w * .55, .15 * Math.PI, .85 * Math.PI);
+      else { g.moveTo(fx + s * ex - w * .5, ey); g.lineTo(fx + s * ex + w * .5, ey); }
+      g.stroke();
+    }
+  } else {
+    if (e === 'ouvindo') h *= 1.1 + V.nivel * .25;
+    if (e === 'pensando') h *= .82;
+    if (pisca) h = R * .04;
+    const lx = e === 'pensando' ? Math.sin(t * 1.4) * w * .22 : V.olhaX * w * .55;
+    const ly = e === 'pensando' ? -h * .22 : e === 'trabalhando' ? h * .18 : V.olhaY * h * .45;
+    for (const s of [-1, 1]) {
+      const x0 = fx + s * ex;
+      g.fillStyle = tinta; bloco(x0 - w / 2, ey - h / 2, w, h, redondo);
+      if (!pisca) {                                              // brilho do olho, que anda junto com o olhar
+        const b = w * .36; g.fillStyle = 'rgba(255,255,255,.92)';
+        bloco(x0 - w * .14 - b / 2 + lx, ey - h * .2 - b / 2 + ly, b, b, redondo);
+      }
+    }
+  }
+  g.fillStyle = tinta;
+  const my = cy + R * .22 + oy;
+  if (e === 'falando') { const bw = R * (.13 + V.nivel * .1), bh = R * (.05 + V.nivel * .22); bloco(fx - bw / 2, my - bh / 2, bw, bh, true); }
+  else if (feliz || e === 'ouvindo') { g.beginPath(); g.arc(fx, my - R * .06, R * .085, .18 * Math.PI, .82 * Math.PI); g.stroke(); }
+  else if (e === 'pensando') bloco(fx + R * .06, my - R * .03, R * .07, R * .07, true);
+  if (feliz) { g.fillStyle = 'rgba(255,120,150,.4)'; for (const s of [-1, 1]) bloco(fx + s * ex * 1.5 - R * .075, ey + R * .14, R * .15, R * .07, true); }
+}
 const formaAtual = () => { const f = document.getElementById('app').dataset.forma; return PALETA_FORMA[f] ? f : 'orbe'; };
 // o corpo de cada forma, no espaço do próprio Jarvis (y para baixo); devolve [x, y, z]
 function formaPonto(fm, p, t) {
@@ -629,12 +737,10 @@ function formaPonto(fm, p, t) {
 }
 // enfeites desenhados por cima: olhos do fantasma, raios da entidade elétrica
 function formaEnfeite(fm, cx, cy, R, t, e) {
-  if (fm === 'fantasma') {
-    const pisca = (t % 4.2) < 0.12, w = R * 0.15, h = pisca ? R * 0.03 : R * 0.22, oy = cy - R * 0.08 - h / 2;
-    g.fillStyle = 'rgba(12,16,28,.92)';
-    g.fillRect(cx - R * 0.32 - w / 2, oy, w, h); g.fillRect(cx + R * 0.32 - w / 2, oy, w, h);
-    if (e === 'falando') { const b = R * (0.06 + V.nivel * 0.16); g.fillRect(cx - b / 2, cy + R * 0.22, b, b); }
-  } else if (fm === 'eletrica') {
+  const redondo = corpoAtual() === 'luz' || corpoAtual() === 'liso';
+  if (fm === 'fantasma') rosto(cx, cy - R * .02, R, t, e, redondo);
+  else if (fm === 'chama') rosto(cx, cy + R * .12, R * .82, t, e, redondo);
+  else if (fm === 'eletrica') {
     const n = e === 'falando' || e === 'pensando' ? 3 : e === 'dormindo' || e === 'mudo' ? (Math.random() < 0.45 ? 1 : 0) : 2;
     g.globalCompositeOperation = 'lighter'; g.lineWidth = Math.max(1.5, R * 0.018);
     for (let i = 0; i < n; i++) {
@@ -668,9 +774,10 @@ $('#palco').addEventListener('pointerleave', () => { MOUSE.dentro = false; MOUSE
 V.olhaX = 0; V.olhaY = 0;
 let tAnt = performance.now();
 function fpsAlvo() {
-  if (!document.hasFocus()) return 15;
+  if (document.hidden) return 4;
+  if (!document.hasFocus()) return 12;
   const e = S.mudo ? 'mudo' : estadoVisual();
-  return (e === 'dormindo' || e === 'mudo') && !MOUSE.dentro ? 30 : 60;
+  return (e === 'dormindo' || e === 'mudo') && !MOUSE.dentro ? 24 : 45;
 }
 function quadro(agora) {
   if (agora - tAnt < 1000 / fpsAlvo() - 3) { requestAnimationFrame(quadro); return; }
@@ -713,16 +820,21 @@ function quadro(agora) {
     lista.push([x * d, y2 * d, z2 * d, p]);
   }
   lista.sort((a, b) => a[2] - b[2]);
-  const base = Math.max(3, R * .052);
+  const base = Math.max(3, R * .052), corpo = corpoAtual();
+  if (corpo === 'luz') { prepSprites(); g.globalCompositeOperation = 'lighter'; }
   for (const [x, y, z, p] of lista) {
     const prof = (z + 1.4) / 2.8, esc2 = .55 + prof * .75, l = base * esc2 * (.75 + .5 * p.s * .6);
     let px = cx + x * R, py = cy + y * R;
     const mdx = px - MOUSE.x, mdy = py - MOUSE.y, md = Math.hypot(mdx, mdy), alc = R * .55;
     if (md < alc && md > .01) { const f = (1 - md / alc) ** 2 * R * .28; px += mdx / md * f; py += mdy / md * f; }
     const mix = .5 + .5 * Math.sin(p.f + t * .6), luz = .35 + prof * .75;
+    if (corpo === 'luz') { const s = l * 2.8; g.globalAlpha = .2 + prof * .42; g.drawImage(SPR[mix < .5 ? 0 : 1], px - s / 2, py - s / 2, s, s); continue; }
     const c = i => Math.min(255, (V.cor1[i] * (1 - mix) + V.cor2[i] * mix) * luz) | 0;
     const r = c(0), gg = c(1), b = c(2);
-    g.fillStyle = `rgb(${r},${gg},${b})`; g.fillRect(px - l / 2, py - l / 2, l, l);               // frente
+    g.fillStyle = `rgb(${r},${gg},${b})`;
+    if (corpo === 'liso') { g.beginPath(); g.arc(px, py, l * 1.3, 0, 6.2832); g.fill(); continue; }      // bolas grandes que se fundem: superfície lisa
+    g.fillRect(px - l / 2, py - l / 2, l, l);               // frente
+    if (corpo === 'pixel' || l < 5) continue;               // pixel (e cubos minúsculos): só a frente, bem mais leve
     g.fillStyle = `rgb(${Math.min(255, r * 1.35) | 0},${Math.min(255, gg * 1.35) | 0},${Math.min(255, b * 1.35) | 0})`;
     g.beginPath(); g.moveTo(px - l / 2, py - l / 2); g.lineTo(px - l / 2 + l * .3, py - l / 2 - l * .3);
     g.lineTo(px + l / 2 + l * .3, py - l / 2 - l * .3); g.lineTo(px + l / 2, py - l / 2); g.fill();  // topo
@@ -730,6 +842,7 @@ function quadro(agora) {
     g.beginPath(); g.moveTo(px + l / 2, py - l / 2); g.lineTo(px + l / 2 + l * .3, py - l / 2 - l * .3);
     g.lineTo(px + l / 2 + l * .3, py + l / 2 - l * .3); g.lineTo(px + l / 2, py + l / 2); g.fill();  // lado
   }
+  if (corpo === 'luz') { g.globalAlpha = 1; g.globalCompositeOperation = 'source-over'; }
   if (!faixa) formaEnfeite(fm, cx, cy, R, t, e);
   // anel de nível, em blocos
   const blocos = faixa ? 0 : 48, on = Math.round(V.nivel * blocos);
@@ -765,6 +878,8 @@ $('#palco').onclick = ev => {
   if (S.estado === 'falando') manda({ t: 'calar' }); else manda({ t: 'acordar' });
 };
 $('#btMini').onclick = () => manda({ t: 'janela', modo: 'mini' });
+$('#btAtualiza').onclick = () => { janelaAtualiza(); SONS.clique(); };
+document.addEventListener('pointerdown', e => { const j = $('#atualiza'); if (!j.hidden && !e.target.closest('#atualiza,#btAtualiza,.aviso')) j.hidden = true; }, true);
 $('#vPainel').onclick = () => { vista('painel'); SONS.clique(); };
 $('#vEntregas').onclick = () => { if (S.painel) manda({ t: 'fechar' }); vista('entregas'); SONS.clique(); };
 $('#vProcessos').onclick = () => { if (S.painel) manda({ t: 'fechar' }); vista('processos'); SONS.clique(); };

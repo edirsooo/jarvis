@@ -105,6 +105,12 @@ A personalidade (um espírito de poucas palavras que vive no orbe) está em `per
 
 O botão **✦ Aparência** troca a forma do Jarvis (orbe de cubos, fantasminha, bola de fogo, entidade elétrica, espírito dourado), o cenário do palco (ruínas ao luar, masmorra, floresta sombria, torre arcana), a classe do mago (mago, sábio, arcanista, aprendiz, cavaleiro, patrulheiro, necromante) e o tema da tela. Para criar um cenário novo, basta uma entrada em `CENAS` (`web\cenario.js`); uma forma nova, em `FORMAS` e `formaPonto` (`web\app.js`); uma classe nova, em `R` (`web\mago.js`).
 
+O menu tem três abas. Em **Jarvis** ficam a forma, o estilo do corpo (cubos 3D, pixel leve, luz suave ou bolhas macias), a cor e a esfera flutuante. Em **Mago** ficam a classe e o tamanho. Em **Tela** ficam o tema, a cor de destaque, o cenário e a versão. O fantasminha e a bola de fogo têm rosto: os olhos seguem o mouse e piscam, ele sorri quando o mouse passa por cima e mexe a boca quando fala. Se o computador estiver pesado, use o estilo **Pixel leve**, que é o mais leve.
+
+### Atualizar
+
+A cada 6 horas o Jarvis confere no GitHub se saiu versão nova (`git fetch`). Quando sai, aparece o botão **⬆ Atualizar** no topo e um aviso com a lista de novidades. **Atualizar agora** roda `git pull --ff-only` e reinicia o Jarvis sozinho. Se ele estava calado, volta calado. Com missão rodando, ele espera. **Ver no GitHub** abre a lista de mudanças. Para procurar na hora, use **Aparência → Tela → Procurar atualização**. Isso só funciona em cópia clonada pelo git; se você baixou o ZIP, baixe a versão nova pelo GitHub.
+
 ### Transcrição na placa
 
 Sem placa NVIDIA, a transcrição usa o processador com o modelo `small`. Com placa, instale o PyTorch com CUDA (ele traz as bibliotecas que a transcrição precisa) e o Jarvis passa a usar o `large-v3-turbo` sozinho:

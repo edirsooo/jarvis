@@ -142,6 +142,8 @@ def so_chamou(texto):
     return 0 < len(palavras) <= 3 and "jarvis" in palavras and all(p in _SO_NOME for p in palavras)
 
 
+ATUALIZA = {"atras": 0, "novidades": [], "url": "", "versao": "", "erro": "", "checado": 0}   # versão nova no GitHub
+
 class Jarvis:
     def __init__(self):
         self.laco = None
@@ -149,7 +151,7 @@ class Jarvis:
         self._frente = (0.0, False)      # (quando conferiu, painel grande na frente)
         self.principal = None
         self.estado = "dormindo"     # dormindo | ouvindo | pensando | falando
-        self.mudo = False
+        self.mudo = os.environ.pop("JARVIS_MUDO", "") == "1"     # volta calado se estava calado antes de reiniciar
         self.acordado_ate = 0.0
         self.falando_ate = 0.0
         self.fila_fala = 0
@@ -225,7 +227,7 @@ class Jarvis:
                          "stt": self.ouvido.stt.onde if self.ouvido else "-", "voz": self.voz.motor_em_uso,
                          "cerebro": "local" if self.cerebro.em_uso == "local" else "Claude",
                          "cerebro_modo": self.cerebro.modo, "escuta": "nome" if self.so_nome else "aberta"},
-                "agenda": self.agenda}
+                "agenda": self.agenda, "atualizacao": ATUALIZA}
 
     # ---------- eventos do ouvido ----------
     def _nivel(self, v):
@@ -1062,6 +1064,103 @@ class Jarvis:
     async def api_estado(self, req):
         return web.json_response(self.retrato())
 
+    # ---------- atualização pelo GitHub ----------
+    async def _git(self, *args, tempo=60):
+        p = await asyncio.create_subprocess_exec("git", *args, cwd=AQUI, stdout=asyncio.subprocess.PIPE, stderr=asyncio.subprocess.PIPE,
+                                                 creationflags=getattr(subprocess, "CREATE_NO_WINDOW", 0))
+        try:
+            out, err = await asyncio.wait_for(p.communicate(), tempo)
+        except asyncio.TimeoutError:
+            p.kill()
+            return 1, "", "o git demorou demais"
+        return p.returncode, out.decode("utf-8", "replace").strip(), err.decode("utf-8", "replace").strip()
+
+    async def checar_atualizacao(self, buscar=True):
+        """Confere se o GitHub tem versão nova (git fetch e conta os commits que faltam). Avisa as telas se tiver."""
+        falso = os.environ.get("JARVIS_ATUALIZA_FALSO")
+        if falso is not None:
+            n = int(falso or 0)
+            ATUALIZA.update(atras=n, novidades=[f"Novidade de teste {i + 1}" for i in range(min(n, 6))], url="https://github.com/exemplo/jarvis", versao="teste", erro="")
+        else:
+            if not os.path.isdir(os.path.join(AQUI, ".git")):
+                ATUALIZA.update(erro="Esta cópia não veio do git: baixe a versão nova pelo GitHub.")
+                return ATUALIZA
+            if buscar:
+                rc, _, err = await self._git("fetch", "--quiet", "origin")
+                if rc:
+                    ATUALIZA.update(erro="Sem acesso ao GitHub agora: " + err[-160:])
+                    return ATUALIZA
+            rc, n, err = await self._git("rev-list", "--count", "HEAD..@{u}")
+            if rc:
+                ATUALIZA.update(erro="Não deu para comparar com o GitHub: " + err[-160:])
+                return ATUALIZA
+            _, lista, _ = await self._git("log", "--format=%s", "-n", "6", "HEAD..@{u}")
+            _, url, _ = await self._git("remote", "get-url", "origin")
+            _, versao, _ = await self._git("log", "-1", "--format=%h · %cd", "--date=format:%d/%m/%Y")
+            url = url[:-4] if url.endswith(".git") else url
+            if url.startswith("git@github.com:"):
+                url = "https://github.com/" + url[len("git@github.com:"):]
+            ATUALIZA.update(atras=int(n or 0), novidades=[x for x in lista.splitlines() if x][:6], url=url, versao=versao, erro="")
+        ATUALIZA["checado"] = time.time()
+        if ATUALIZA["atras"]:
+            log(f"atualização: {ATUALIZA['atras']} novidade(s) no GitHub")
+        self.enviar(t="atualizacao", v=ATUALIZA)
+        return ATUALIZA
+
+    async def laco_atualizacao(self):
+        await asyncio.sleep(3 if os.environ.get("JARVIS_ATUALIZA_FALSO") else 25)
+        while True:
+            try:
+                await self.checar_atualizacao()
+            except Exception as e:
+                log(f"atualização: {e}")
+            await asyncio.sleep(6 * 3600)
+
+    def reiniciar_processo(self):
+        """Fecha este Jarvis e abre outro igual daqui a 2,5 s (já com o código novo). Volta calado se estava calado."""
+        janelas.fechar_mini()
+        self.agentes.salvar()
+        amb = dict(os.environ)
+        if self.mudo:
+            amb["JARVIS_MUDO"] = "1"
+        cmd = [sys.executable, os.path.abspath(sys.argv[0])] + sys.argv[1:]
+        espera = "import sys, time, subprocess; time.sleep(2.5); subprocess.Popen(sys.argv[2:], cwd=sys.argv[1])"
+        subprocess.Popen([sys.executable, "-c", espera, os.getcwd()] + cmd, env=amb, cwd=os.getcwd(),
+                         creationflags=getattr(subprocess, "DETACHED_PROCESS", 0) | getattr(subprocess, "CREATE_NO_WINDOW", 0))
+        asyncio.get_running_loop().call_later(0.5, lambda: os._exit(0))
+
+    async def api_atualizacao(self, req):
+        """GET: o que se sabe. POST {acao: checar | atualizar | ver}: procura agora, dá git pull e reinicia, ou abre o GitHub."""
+        if req.method == "GET":
+            return web.json_response(ATUALIZA)
+        d = await req.json()
+        acao = d.get("acao")
+        if acao == "checar":
+            return web.json_response(await self.checar_atualizacao())
+        if acao == "ver":
+            url = ATUALIZA.get("url") or ""
+            if url.startswith("https://github.com/") and not os.environ.get("JARVIS_TESTE"):
+                webbrowser.open(url + "/commits")
+            return web.json_response({"ok": bool(url)})
+        if acao == "atualizar":
+            if self.agentes.ativas():
+                return web.json_response({"ok": False, "erro": "Tem missão rodando. Espere terminar (ou pare) e atualize depois."})
+            if os.environ.get("JARVIS_ATUALIZA_FALSO") is not None:
+                ATUALIZA.update(atras=0, novidades=[])
+                self.enviar(t="atualizacao", v=ATUALIZA)
+                return web.json_response({"ok": True, "saida": "teste: nada baixado", "reinicia": False})
+            rc, out, err = await self._git("pull", "--ff-only", tempo=180)
+            if rc:
+                log(f"atualização falhou: {err or out}")
+                junto = err + out
+                dica = " Há mudanças locais nos arquivos: guarde-as (git stash) ou resolva antes." if "local changes" in junto or "diverg" in junto else ""
+                return web.json_response({"ok": False, "erro": (err or out)[-300:] + dica})
+            log("atualizado pelo GitHub")
+            ATUALIZA.update(atras=0, novidades=[])
+            self.reiniciar_processo()
+            return web.json_response({"ok": True, "saida": out[-300:], "reinicia": True})
+        return web.json_response({"ok": False, "erro": "ação desconhecida"}, status=400)
+
     async def api_sair(self, req):
         log("saindo a pedido")
         janelas.fechar_mini()
@@ -1096,15 +1195,15 @@ class Jarvis:
         """Roupa do mago e tema da tela. A tela desenha o mago e manda as poses prontas; a esfera flutuante só as copia."""
         if req.method == "POST":
             d = await req.json()
-            for k in ("roupa", "tema", "tam", "mini_sempre", "forma", "cenario", "cor", "cor_jarvis"):
+            for k in ("roupa", "tema", "tam", "mini_sempre", "forma", "cenario", "cor", "cor_jarvis", "corpo"):
                 if k in d:
                     VISUAL[k] = d[k]
             if isinstance(d.get("poses"), dict):
                 VISUAL["poses"] = d["poses"]
             VISUAL["v"] = int(time.time() * 1000) % 10 ** 9
             _gravar_json(ARQ_VISUAL, VISUAL)
-            if any(k in d for k in ("roupa", "tema", "forma", "cenario", "cor", "cor_jarvis")):      # as outras telas abertas trocam junto
-                self.enviar(t="visual", v={k: VISUAL.get(k) for k in ("roupa", "tema", "tam", "mini_sempre", "forma", "cenario", "cor", "cor_jarvis")})
+            if any(k in d for k in ("roupa", "tema", "forma", "cenario", "cor", "cor_jarvis", "corpo")):      # as outras telas abertas trocam junto
+                self.enviar(t="visual", v={k: VISUAL.get(k) for k in ("roupa", "tema", "tam", "mini_sempre", "forma", "cenario", "cor", "cor_jarvis", "corpo")})
         cheio = req.query.get("poses") == "1"
         return web.json_response({k: v for k, v in VISUAL.items() if cheio or k != "poses"})
 
@@ -1146,6 +1245,8 @@ class Jarvis:
         asyncio.ensure_future(aquecer_cerebro())
         asyncio.ensure_future(self.laco_cotas())
         asyncio.ensure_future(self.laco_agenda())
+        if not os.environ.get("JARVIS_TESTE") or os.environ.get("JARVIS_ATUALIZA_FALSO"):
+            asyncio.ensure_future(self.laco_atualizacao())
         if AJUSTES.get("cerebro") in ("local", "claude") and not os.environ.get("JARVIS_CEREBRO"):
             self.cerebro.mudar(AJUSTES["cerebro"])
 
@@ -1165,6 +1266,7 @@ class Jarvis:
                 ao_comecar_fala=lambda: self.do_fio(self._comecou_fala),
                 ao_falar=lambda t, n: self.do_fio(self._ouviu, t, n))
             self.ouvido.acordado = self.acordado
+            self.ouvido.mudo = self.mudo
             self.ouvido.iniciar()
         log(f"Jarvis no ar em http://127.0.0.1:{CFG['porta']}")
 
@@ -1247,6 +1349,8 @@ def main():
     app.router.add_post("/api/mudo", j.api_mudo)
     app.router.add_post("/api/parar", j.api_parar)
     app.router.add_get("/api/visual", j.api_visual)
+    app.router.add_get("/api/atualizacao", j.api_atualizacao)
+    app.router.add_post("/api/atualizacao", j.api_atualizacao)
     app.router.add_post("/api/visual", j.api_visual)
     app.router.add_get("/api/processos", j.api_processos)
     app.router.add_post("/api/processos", j.api_processos)
@@ -1256,6 +1360,11 @@ def main():
     app.router.add_get("/m/{n}/{resto:.*}", j.arquivo_missao)
     app.router.add_static("/voz", PASTA_VOZ)
     app.router.add_static("/", os.path.join(AQUI, "web"))
+
+    async def sem_cache_velho(req, resp):      # a janela do Windows guardava o CSS antigo: agora ela sempre confere se mudou
+        if "Cache-Control" not in resp.headers:
+            resp.headers["Cache-Control"] = "no-cache"
+    app.on_response_prepare.append(sem_cache_velho)
     web.run_app(app, host="127.0.0.1", port=CFG["porta"], print=None, access_log=None)
 
 

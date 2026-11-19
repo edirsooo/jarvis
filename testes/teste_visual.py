@@ -27,7 +27,7 @@ def get(caminho):
 
 
 amb = dict(os.environ)
-amb.update(JARVIS_TESTE=PASTA, JARVIS_PORTA="4793", JARVIS_CEREBRO="claude", PYTHONIOENCODING="utf-8", FALSO_DURA="30")
+amb.update(JARVIS_TESTE=PASTA, JARVIS_PORTA="4793", JARVIS_CEREBRO="claude", PYTHONIOENCODING="utf-8", FALSO_DURA="30", JARVIS_ATUALIZA_FALSO="2")
 __import__("_cenario").preparar(PASTA, amb)
 FALSO = os.path.join(SAIDA, "falso")
 __import__("shutil").copytree(os.path.join(AQUI, "falso"), FALSO, dirs_exist_ok=True)
@@ -66,9 +66,13 @@ try:
         confere("forma e cenário guardados no servidor", v.get("forma") == "espirito" and v.get("cenario") == "ruinas", {k: v.get(k) for k in ("tema", "forma", "cenario")})
         pg.evaluate("() => MAGO.aplica({forma: 'orbe'})")
         pg.click("#btVisual"); pg.wait_for_timeout(600)
-        confere("menu Aparência mostra forma, cenário e as 7 classes",
-                pg.locator("#visual [data-forma]").count() == 5 and pg.locator("#visual [data-cenario]").count() >= 5 and pg.locator("#visual [data-roupa]").count() == 7)
-        pg.screenshot(path=os.path.join(FOTOS, "menu_aparencia.png"))
+        confere("menu Aparência mostra forma, estilo do corpo, cenário e as 7 classes",
+                pg.locator("#visual [data-forma]").count() == 5 and pg.locator("#visual [data-corpo]").count() == 4 and pg.locator("#visual [data-cenario]").count() >= 5 and pg.locator("#visual [data-roupa]").count() == 7)
+        alturas = pg.evaluate("() => [...document.querySelectorAll('#visual [data-corj], #visual [data-forma]')].map(b => Math.round(b.getBoundingClientRect().height))")
+        confere("cores do Jarvis do mesmo tamanho das formas", min(alturas) >= 36 and max(alturas) - min(alturas) <= 4, alturas)
+        pg.locator("#visual").screenshot(path=os.path.join(FOTOS, "menu_aba_jarvis.png"))
+        pg.click("#visual [data-aba=tela]"); pg.wait_for_timeout(300); pg.locator("#visual").screenshot(path=os.path.join(FOTOS, "menu_aba_tela.png"))
+        pg.click("#visual [data-aba=mago]"); pg.wait_for_timeout(300); pg.locator("#visual").screenshot(path=os.path.join(FOTOS, "menu_aba_mago.png"))
         pg.click("#visual [data-roupa=cavaleiro]"); pg.wait_for_timeout(500); pg.keyboard.press("Escape"); pg.wait_for_timeout(600)
         pg.screenshot(path=os.path.join(FOTOS, "classe_cavaleiro.png"))
         # outros temas continuam de pé
@@ -99,6 +103,33 @@ try:
         time.sleep(0.5)
         confere("esfera flutuante recebe a cor do Jarvis", get("/api/mini").get("cor_jarvis") == "#ff7ac8")
         pg.evaluate("() => MAGO.aplica({cor_jarvis: ''})"); pg.wait_for_timeout(300)
+        # estilos do corpo e rosto: cada um desenha a esfera; fotos do fantasminha e da bola de fogo de perto
+        caixa = pg.evaluate("() => { const r = document.getElementById('esfera').getBoundingClientRect(); return {x: r.x + r.width/2 - 190, y: r.y + r.height*.4 - 190, width: 380, height: 380}; }")
+        for fm in ("fantasma", "chama"):
+            for cp in pg.evaluate("() => CORPOS.map(c => c[0])"):
+                pg.evaluate(f"() => MAGO.aplica({{forma: '{fm}', corpo: '{cp}'}})"); pg.wait_for_timeout(700)
+                cheio = pg.evaluate("() => { const c = document.getElementById('esfera'), d = c.getContext('2d').getImageData(0, 0, c.width, c.height).data; let n = 0; for (let i = 3; i < d.length; i += 64) if (d[i] > 20) n++; return n; }")
+                confere(f"{fm} em {cp} desenha", cheio > 300, cheio)
+                pg.screenshot(path=os.path.join(FOTOS, f"corpo_{fm}_{cp}.png"), clip=caixa)
+        for est in ("ouvindo", "pensando", "falando"):      # rosto acordado (estado só na tela)
+            pg.evaluate(f"() => {{ S.estado = '{est}'; }}"); pg.wait_for_timeout(900)
+            pg.screenshot(path=os.path.join(FOTOS, f"rosto_{est}.png"), clip=caixa)
+        pg.evaluate("() => { S.estado = 'dormindo'; }")
+        pg.mouse.move(caixa["x"] + 190, caixa["y"] + 190); pg.wait_for_timeout(900)
+        pg.screenshot(path=os.path.join(FOTOS, "fantasma_carinho.png"), clip=caixa)
+        confere("estilo do corpo guardado", (time.sleep(0.4) or get("/api/visual")).get("corpo") == "liso")
+        pg.mouse.move(5, 880)
+        pg.evaluate("() => MAGO.aplica({forma: 'orbe', corpo: 'cubos'})"); pg.wait_for_timeout(300)
+        # aviso de atualização (o servidor finge 2 novidades): botão no topo, janela com a lista e atualizar
+        confere("botão de atualização aparece", pg.is_visible("#btAtualiza"), pg.text_content("#btAtualiza"))
+        pg.click("#btAtualiza"); pg.wait_for_timeout(400)
+        confere("janela mostra as novidades", "Novidade de teste 1" in (pg.text_content("#atualiza") or ""))
+        pg.screenshot(path=os.path.join(FOTOS, "atualizacao.png"))
+        pg.click("#atualiza [data-acao=atualizar]"); pg.wait_for_timeout(800)
+        confere("atualizar responde e some o botão", "Atualizado" in (pg.text_content("#atualiza .atu-msg") or "") and not pg.is_visible("#btAtualiza"), pg.text_content("#atualiza .atu-msg"))
+        pg.click("#atualiza [data-acao=fechar]")
+        with urllib.request.urlopen(BASE + "/estilo.css", timeout=5) as r:
+            confere("arquivos da tela sem cache velho", r.headers.get("Cache-Control") == "no-cache", r.headers.get("Cache-Control"))
         pg.evaluate("() => MAGO.aplica({tema: 'abismo', roupa: 'torre'})"); pg.wait_for_timeout(400)
         # com missão: palco vira coluna, cenário acompanha
         urllib.request.urlopen(urllib.request.Request(BASE + "/api/texto", data=json.dumps({"texto": "Faz a prospecção de academias em Valinhos."}).encode(), headers={"Content-Type": "application/json"}), timeout=5)

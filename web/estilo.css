@@ -500,17 +500,38 @@ footer{min-width:0;overflow:hidden;display:flex;align-items:center;gap:16px;padd
 #app[data-tema="classico"]{--tinta:#ff6b1a}
 /* cor de destaque escolhida no menu: vale por cima do tema */
 #app[style*="--destaque"]{--laranja:var(--destaque);--ouro:var(--destaque)}
-.vis-cores{display:flex;flex-wrap:wrap;gap:8px;margin-bottom:12px;align-items:center}
-.vis-cores button{width:34px;height:34px;padding:0;border:2px solid #0008;box-shadow:inset 0 0 0 1px #fff3}
-.vis-cores button.on{outline:2px solid var(--texto);outline-offset:2px}
-.vis-cores label{display:flex;align-items:center;gap:8px;font-size:13px;color:var(--fraco);margin-left:6px;cursor:pointer}
-.vis-cores input[type=color]{width:34px;height:34px;padding:0;border:2px solid var(--borda);background:none;cursor:pointer}
+/* menu Aparência: abas e grade de escolhas, todas do mesmo tamanho */
+.vis-abas{display:flex;gap:6px;margin:0 0 14px;border-bottom:1px solid var(--borda)}
+.vis-abas button{flex:1;padding:9px 10px;background:none;border:0;border-bottom:3px solid transparent;color:var(--fraco);font-weight:700;font-size:14px;letter-spacing:.08em;cursor:pointer}
+.vis-abas button.on{color:var(--texto);border-bottom-color:var(--ouro)}
+#visual .vis-abas button.on{box-shadow:none!important}
+#visual section{animation:abre .15s steps(3)}
+.vis-temas.grade{display:grid;grid-template-columns:repeat(auto-fill,minmax(150px,1fr));gap:8px}
+.vis-temas.grade.dupla{grid-template-columns:1fr 1fr}
+.vis-temas.grade.tres{grid-template-columns:repeat(3,1fr)}
+.vis-temas.grade button{justify-content:flex-start;min-height:44px;text-align:left;line-height:1.15}
+.vis-temas .amostra,.vis-temas i{flex:none;width:20px!important;height:20px!important;border-radius:4px;border:1px solid #ffffff30;box-shadow:inset 0 0 0 1px #0006}
+.vis-livre{display:flex;align-items:center;gap:8px;min-height:44px;font-family:inherit;padding:6px 12px;background:var(--fundo);border:2px dashed var(--borda);font-weight:600;font-size:13px;color:var(--fraco);cursor:pointer}
+.vis-livre:hover{border-color:var(--fraco);color:var(--texto)}
+.vis-livre input[type=color]{width:22px;height:22px;padding:0;border:0;background:none;cursor:pointer}
+.vis-versao{display:flex;align-items:center;justify-content:space-between;gap:12px;font-size:13px;color:var(--fraco)}
+.vis-versao button{padding:8px 14px;background:var(--fundo);border:2px solid var(--borda);font-weight:600;font-size:13px}
+/* atualização */
+header button.atualiza{border-color:var(--ouro)!important;color:var(--ouro);animation:brasaBt 2.4s ease-in-out infinite}
+#atualiza{position:absolute;top:76px;right:24px;z-index:61;width:min(460px,calc(100% - 48px));background:var(--painel);border:2px solid var(--ouro);box-shadow:8px 8px 0 #000;padding:16px 18px;animation:abre .2s steps(4)}
+#app[data-tema="abismo"] #atualiza{background:linear-gradient(#17120f,#0e0b09);border:1px solid var(--ouro);box-shadow:0 0 0 3px #000,0 0 0 4px #6b5530,0 20px 60px #000d}
+#atualiza p{margin:6px 0;font-size:14px}
+#atualiza ul{margin:6px 0 12px;padding-left:20px;font-size:13.5px;color:var(--fraco);line-height:1.5}
+#atualiza small{display:block;color:var(--fraco);font-size:12px;line-height:1.45;margin-top:10px}
+.atu-botoes{display:flex;gap:8px;flex-wrap:wrap}
+.atu-msg{margin-top:10px;font-size:13.5px;color:var(--ouro);min-height:1em}
+.atu-msg.erro{color:#ff8a7a}
 
 /* menu Aparência */
 .vis-cab{display:flex;align-items:baseline;gap:12px;margin:-2px 0 12px;padding-bottom:10px;border-bottom:1px solid var(--borda)}
 .vis-cab b{font-family:var(--serif);font-size:22px;letter-spacing:.06em}
 .vis-cab span{color:var(--fraco);font-size:12.5px}
-.vis-temas .amostra{width:14px;height:14px;border:1px solid #ffffff30;box-shadow:inset 0 0 0 1px #0006}
+
 header button,#vistas button{white-space:nowrap}
 #app[data-tema="abismo"] #vistas button{letter-spacing:.2em;padding:10px 16px}
 #app[data-tema="abismo"] header .topo-botoes button{letter-spacing:.02em;padding:8px 14px}

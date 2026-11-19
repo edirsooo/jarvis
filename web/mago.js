@@ -17,7 +17,7 @@
   const ROUPAS = [['torre', 'Mago da torre'], ['grimorio', 'Sábio'], ['cristal', 'Arcanista'], ['rpg', 'Aprendiz'],
     ['cavaleiro', 'Cavaleiro'], ['patrulheiro', 'Patrulheiro'], ['necro', 'Necromante']];
   const TEMAS = [['abismo', 'Abismo', '#c9a35a'], ['classico', 'Clássico', '#ff6b1a'], ['torre', 'Torre', '#c9772b'], ['grimorio', 'Grimório', '#5fa56f'], ['cristal', 'Cristal', '#8f6bff'], ['rpg', 'RPG', '#3f7bff']];
-  const V = { roupa: 'torre', tema: 'abismo', tam: 1, mini_sempre: false, forma: 'orbe', cenario: 'ruinas', cor: '', cor_jarvis: '' };
+  const V = { roupa: 'torre', tema: 'abismo', tam: 1, mini_sempre: false, forma: 'orbe', cenario: 'ruinas', cor: '', cor_jarvis: '', corpo: 'cubos' };
   const CORES = [['', 'Do tema'], ['#c9a35a', 'Ouro'], ['#ff6b1a', 'Brasa'], ['#d0574a', 'Sangue'], ['#58c48d', 'Esmeralda'], ['#5ad7ff', 'Gelo'], ['#9a7bff', 'Arcano'], ['#ff7ac8', 'Rosa']];
 
   // ----- desenho voxel: caixas [x, y, z, largura, altura, fundo, cor, flag]; x para a direita, y para cima, z para o fundo -----
@@ -489,12 +489,12 @@
     return out;
   }
   function tema() {
-    const a = q('#app'); a.dataset.tema = V.tema; a.dataset.forma = V.forma; a.dataset.cenario = V.cenario; a.dataset.corJarvis = V.cor_jarvis || '';
+    const a = q('#app'); a.dataset.tema = V.tema; a.dataset.forma = V.forma; a.dataset.cenario = V.cenario; a.dataset.corJarvis = V.cor_jarvis || ''; a.dataset.corpo = V.corpo || 'cubos';
     if (V.cor) { a.style.setProperty('--destaque', V.cor); a.style.setProperty('--tinta', V.cor); }
     else { a.style.removeProperty('--destaque'); a.style.removeProperty('--tinta'); }
   }
   function grava(extra) {
-    fetch('/api/visual', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(Object.assign({ roupa: V.roupa, tema: V.tema, tam: V.tam, mini_sempre: !!V.mini_sempre, forma: V.forma, cenario: V.cenario, cor: V.cor, cor_jarvis: V.cor_jarvis, poses: poses() }, extra || {})) }).catch(() => {});
+    fetch('/api/visual', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(Object.assign({ roupa: V.roupa, tema: V.tema, tam: V.tam, mini_sempre: !!V.mini_sempre, forma: V.forma, cenario: V.cenario, cor: V.cor, cor_jarvis: V.cor_jarvis, corpo: V.corpo, poses: poses() }, extra || {})) }).catch(() => {});
   }
   function aplica(v, deFora) {
     if (v.roupa && R[v.roupa]) V.roupa = v.roupa;
@@ -505,6 +505,7 @@
     if ('cor' in v && (v.cor === '' || /^#[0-9a-f]{6}$/i.test(v.cor || ''))) V.cor = v.cor || '';
     if ('cor_jarvis' in v && (v.cor_jarvis === '' || /^#[0-9a-f]{6}$/i.test(v.cor_jarvis || ''))) V.cor_jarvis = v.cor_jarvis || '';
     if (v.cenario && (window.CENARIOS || []).some((x) => x[0] === v.cenario)) V.cenario = v.cenario;
+    if (v.corpo && (window.CORPOS || []).some((x) => x[0] === v.corpo)) V.corpo = v.corpo;
     tema(); if (el) mede();
     if (!deFora) grava();
     marca();
@@ -518,6 +519,7 @@
     document.querySelectorAll('#visual [data-corj]').forEach((b) => b.classList.toggle('on', b.dataset.corj === V.cor_jarvis));
     const livre = q('#visual .vis-cores.destaque input[type=color]'); if (livre && V.cor) livre.value = V.cor;
     const livreJ = q('#visual .vis-cores.jarvis input[type=color]'); if (livreJ && V.cor_jarvis) livreJ.value = V.cor_jarvis;
+    document.querySelectorAll('#visual [data-corpo]').forEach((b) => b.classList.toggle('on', b.dataset.corpo === V.corpo));
     document.querySelectorAll('#visual [data-tam]').forEach((b) => b.classList.toggle('on', +b.dataset.tam === +V.tam));
     document.querySelectorAll('#visual [data-mini]').forEach((b) => b.classList.toggle('on', (b.dataset.mini === '1') === !!V.mini_sempre));
   }
@@ -526,21 +528,40 @@
     if (!m) {
       m = document.createElement('div'); m.id = 'visual'; m.hidden = true;
       const ICONE = { orbe: '#8a90a8', fantasma: '#cfe6f2', chama: '#ff8a3a', eletrica: '#7ab8ff', espirito: '#e8c46a', ruinas: 'linear-gradient(#151426,#4a3a36)', masmorra: 'linear-gradient(#2a221d,#5a1e14)', floresta: 'linear-gradient(#071613,#1a3a30)', torre: 'linear-gradient(#1a1430,#3a2a6a)', nenhum: 'transparent' };
+      const CORPO_ICO = { cubos: 'linear-gradient(135deg,#9aa4c4 0 50%,#5a6380 50%)', pixel: '#8a90a8', luz: 'radial-gradient(circle,#fff 0,#7ad7ff 35%,transparent 70%)', liso: 'radial-gradient(circle at 35% 35%,#cfd6ee,#59627e)' };
+      const chip = (attr, k, n, fundo) => `<button ${attr}="${k}"><i class="amostra" style="background:${fundo}"></i>${n}</button>`;
+      const cores = (attr, lista, livre, qual) => `<div class="vis-temas grade vis-cores ${qual}">${lista.map(([c, n, f]) => chip(attr, c, n, f || c)).join('')}<label class="vis-livre"><input type="color" value="${livre}">Outra cor</label></div>`;
       m.innerHTML = `<div class="vis-cab"><b>Aparência</b><span>Escolhas guardadas para a próxima vez</span></div>
-        <h2>FORMA DO JARVIS</h2><div class="vis-temas">${(window.FORMAS || []).map(([k, n]) => `<button data-forma="${k}"><i class="amostra" style="background:${ICONE[k] || '#888'}"></i>${n}</button>`).join('')}</div>
-        <h2>COR DO JARVIS</h2><div class="vis-cores jarvis">${[['', 'Muda com o estado'], ...CORES.slice(1)].map(([c, n]) => `<button data-corj="${c}" title="${n}" aria-label="${n}" style="background:${c || 'conic-gradient(#5ad7ff 0 25%,#ffd23f 0 50%,#ff6b1a 0 75%,#19c37d 0)'}"></button>`).join('')}<label>Outra cor <input type="color" value="#5ad7ff"></label></div>
-        <h2>CENÁRIO</h2><div class="vis-temas">${(window.CENARIOS || []).map(([k, n]) => `<button data-cenario="${k}"><i class="amostra" style="background:${ICONE[k] || '#888'}"></i>${n}</button>`).join('')}</div>
-        <h2>CLASSE DO MAGO</h2><div class="vis-roupas">${ROUPAS.map(([k, n]) => `<button data-roupa="${k}"><canvas width="120" height="132"></canvas><span>${n}</span></button>`).join('')}</div>
-        <h2>TEMA DA TELA</h2><div class="vis-temas">${TEMAS.map(([k, n, c]) => `<button data-tema="${k}"><i style="background:${c}"></i>${n}</button>`).join('')}</div>
-        <h2>COR DE DESTAQUE</h2><div class="vis-cores destaque">${CORES.map(([c, n]) => `<button data-cor="${c}" title="${n}" aria-label="${n}" style="background:${c || 'linear-gradient(135deg,#c9a35a 50%,#9a7bff 50%)'}"></button>`).join('')}<label>Outra cor <input type="color" value="#c9a35a"></label></div>
-        <h2>TAMANHO</h2><div class="vis-temas">${[[0.8, 'Pequeno'], [1, 'Médio'], [1.35, 'Grande']].map(([v, n]) => `<button data-tam="${v}">${n}</button>`).join('')}</div>
-        <h2>ESFERA FLUTUANTE</h2><div class="vis-temas"><button data-mini="0">Some com o painel aberto</button><button data-mini="1">Sempre por cima (fica em dobro)</button></div>
-        <small>Clique em qualquer ponto livre da tela e ele vai até lá (pula sozinho para cima dos quadros). Clique nele para um carinho. Segure e arraste para carregar. Segure o botão em outro lugar e ele corre atrás do cursor.</small>`;
+        <nav class="vis-abas"><button data-aba="jarvis" class="on">Jarvis</button><button data-aba="mago">Mago</button><button data-aba="tela">Tela</button></nav>
+        <section data-pag="jarvis">
+          <h2>FORMA</h2><div class="vis-temas grade">${(window.FORMAS || []).map(([k, n]) => chip('data-forma', k, n, ICONE[k] || '#888')).join('')}</div>
+          <h2>ESTILO DO CORPO</h2><div class="vis-temas grade">${(window.CORPOS || []).map(([k, n]) => chip('data-corpo', k, n, CORPO_ICO[k] || '#888')).join('')}</div>
+          <h2>COR</h2>${cores('data-corj', [['', 'Automática', 'conic-gradient(#5ad7ff 0 25%,#ffd23f 0 50%,#ff6b1a 0 75%,#19c37d 0)'], ...CORES.slice(1)], '#5ad7ff', 'jarvis')}
+          <h2>ESFERA FLUTUANTE</h2><div class="vis-temas grade dupla"><button data-mini="0">Some com o painel aberto</button><button data-mini="1">Sempre por cima</button></div>
+        </section>
+        <section data-pag="mago" hidden>
+          <h2>CLASSE</h2><div class="vis-roupas">${ROUPAS.map(([k, n]) => `<button data-roupa="${k}"><canvas width="120" height="132"></canvas><span>${n}</span></button>`).join('')}</div>
+          <h2>TAMANHO</h2><div class="vis-temas grade tres">${[[0.8, 'Pequeno'], [1, 'Médio'], [1.35, 'Grande']].map(([v, n]) => `<button data-tam="${v}">${n}</button>`).join('')}</div>
+          <small>Clique em qualquer ponto livre da tela e ele vai até lá (pula sozinho para cima dos quadros). Clique nele para um carinho. Segure e arraste para carregar. Segure o botão em outro lugar e ele corre atrás do cursor.</small>
+        </section>
+        <section data-pag="tela" hidden>
+          <h2>TEMA</h2><div class="vis-temas grade">${TEMAS.map(([k, n, c]) => chip('data-tema', k, n, c)).join('')}</div>
+          <h2>COR DE DESTAQUE</h2>${cores('data-cor', [['', 'Do tema', 'linear-gradient(135deg,#c9a35a 50%,#9a7bff 50%)'], ...CORES.slice(1)], '#c9a35a', 'destaque')}
+          <h2>CENÁRIO</h2><div class="vis-temas grade">${(window.CENARIOS || []).map(([k, n]) => chip('data-cenario', k, n, ICONE[k] || '#888')).join('')}</div>
+          <h2>VERSÃO</h2><div class="vis-versao"><span></span><button data-atualiza="1">Procurar atualização</button></div>
+        </section>`;
       q('#app').appendChild(m);
       m.querySelectorAll('canvas').forEach((c) => retrato(c, c.parentNode.dataset.roupa));
       m.addEventListener('click', (e) => {
         const b = e.target.closest('button'); if (!b) return;
-        if (b.dataset.roupa) { aplica({ roupa: b.dataset.roupa }); festa(1); diz(um(F.roupa)); }
+        if (b.dataset.aba) {
+          m.querySelectorAll('[data-aba]').forEach((x) => x.classList.toggle('on', x === b));
+          m.querySelectorAll('[data-pag]').forEach((x) => { x.hidden = x.dataset.pag !== b.dataset.aba; });
+          return;
+        }
+        if (b.dataset.atualiza) { m.hidden = true; if (window.janelaAtualiza) janelaAtualiza(); return; }
+        if (b.dataset.corpo) aplica({ corpo: b.dataset.corpo });
+        else if (b.dataset.roupa) { aplica({ roupa: b.dataset.roupa }); festa(1); diz(um(F.roupa)); }
         else if (b.dataset.tema) aplica({ tema: b.dataset.tema });
         else if (b.dataset.forma) aplica({ forma: b.dataset.forma });
         else if (b.dataset.cenario) aplica({ cenario: b.dataset.cenario });
@@ -555,6 +576,8 @@
       addEventListener('keydown', (e) => { if (e.key === 'Escape') m.hidden = true; });
     }
     m.hidden = abre === true ? false : !m.hidden; marca();
+    const vv = m.querySelector('.vis-versao span'), atu = typeof S !== 'undefined' ? S.atu || {} : {};
+    if (vv) vv.textContent = atu.versao ? 'Versão ' + atu.versao : 'Jarvis';
   }
 
   function liga() {
