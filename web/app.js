@@ -651,10 +651,10 @@ function paletaDaCor(hex, e) {
   const k = (f) => c.map((v) => Math.min(255, v * f)), claro = c.map((v) => v + (255 - v) * .55);
   return { dormindo: [k(.55), k(.3)], ouvindo: [c, claro], pensando: [claro, k(.75)], falando: [c, claro], trabalhando: [c, k(.7)], mudo: [[120, 40, 50], [60, 30, 36]] }[e];
 }
-// estilos do corpo: cubos 3D (o original), pixel (um quadrado por ponto, o mais leve), luz (partículas que brilham), liso (massinha)
-const CORPOS = [['cubos', 'Cubos 3D'], ['pixel', 'Pixel leve'], ['luz', 'Luz suave'], ['liso', 'Bolhas macias']];
+// estilos do corpo: voxel brilhante (volume de cubinhos de luz, o padrão), cubos 3D (o original), pixel (um quadrado por ponto, o mais leve), luz (partículas que brilham), liso (massinha)
+const CORPOS = [['voxel', 'Voxel brilhante'], ['cubos', 'Cubos 3D'], ['pixel', 'Pixel leve'], ['luz', 'Luz suave'], ['liso', 'Bolhas macias']];
 window.CORPOS = CORPOS;
-const corpoAtual = () => { const c = document.getElementById('app').dataset.corpo; return CORPOS.some((x) => x[0] === c) ? c : 'cubos'; };
+const corpoAtual = () => { const c = document.getElementById('app').dataset.corpo; return CORPOS.some((x) => x[0] === c) ? c : 'voxel'; };
 // luz: uma bolinha de brilho pronta por cor, refeita só quando a cor muda
 const SPR = [document.createElement('canvas'), document.createElement('canvas')];
 SPR.forEach((c) => { c.width = c.height = 48; });
@@ -735,6 +735,80 @@ function formaPonto(fm, p, t) {
   }
   return [x, y, z];
 }
+// voxel brilhante: o corpo é um volume de cubinhos de luz com silhueta cheia (como na abertura 3D do vídeo):
+// fantasma com barra ondulando, chama com línguas e brasas, elétrica com espinhos que piscam, espírito com cauda e luzes em órbita
+const VOX = {};
+function voxForma(fm) {
+  if (VOX[fm]) return VOX[fm];
+  const dentro = {
+    fantasma: (x, y, z) => { const r = Math.hypot(x, z); if (y < -.05) return r * r + (y + .05) ** 2 / .9 <= .74; return r <= .86 && y <= .92 - .16 * (.5 + .5 * Math.sin(Math.atan2(z, x) * 4)); },
+    chama: (x, y, z) => { const r = Math.hypot(x, z); if (y >= .25) return r * r + (y - .25) ** 2 <= .6; const k = (y + 1.25) / 1.5; return k > 0 && r <= .77 * Math.pow(k, 1.25); },
+    eletrica: (x, y, z) => x * x + y * y + z * z <= .6,
+    espirito: (x, y, z) => { if (x * x + (y + .3) ** 2 + z * z <= .34) return true;
+      for (let i = 1; i <= 7; i++) { const u = i / 7, px = .38 * Math.sin(u * 2.8), py = .1 + u * .95, rr = .44 * (1 - u * .78); if ((x - px) ** 2 + (y - py) ** 2 + z * z <= rr * rr) return true; }
+      return false; },
+  }[fm] || ((x, y, z) => x * x + y * y + z * z <= .92);
+  const n = 20, cel = 2.6 / n, P = (i) => -1.3 + (i + .5) * cel, L = [];
+  const em = (i, j, k) => i >= 0 && j >= 0 && k >= 0 && i < n && j < n && k < n && dentro(P(i), P(j), P(k));
+  for (let i = 0; i < n; i++) for (let j = 0; j < n; j++) for (let k = 0; k < n; k++) {
+    if (!em(i, j, k)) continue;
+    if (em(i + 1, j, k) && em(i - 1, j, k) && em(i, j + 1, k) && em(i, j - 1, k) && em(i, j, k + 1) && em(i, j, k - 1)) continue;   // só a casca
+    L.push({ x: P(i), y: P(j), z: P(k), f: Math.random() * 6.28, tom: .82 + Math.random() * .3, k: 'corpo' });
+  }
+  if (fm === 'eletrica') for (let a = 0; a < 12; a++) {              // espinhos: fileiras de cubos para fora
+    const yy = 1 - (a + .5) / 6, rr = Math.sqrt(Math.max(0, 1 - yy * yy)), th = a * 2.39996, dx = Math.cos(th) * rr, dz = Math.sin(th) * rr;
+    for (let r = .82; r < 1.36; r += cel) L.push({ x: dx * r, y: yy * r, z: dz * r, f: Math.random() * 6.28, tom: 1.15, k: 'raio', gr: a });
+  }
+  if (fm === 'espirito') for (let a = 0; a < 7; a++) L.push({ x: 0, y: 0, z: 0, f: a / 7 * 6.28, tom: 1.2, k: 'orbita' });
+  if (fm === 'chama') for (let a = 0; a < 16; a++) { const th = Math.random() * 6.28, r = Math.random() * .45; L.push({ x: Math.cos(th) * r, y: 0, z: Math.sin(th) * r, f: Math.random() * 6.28, tom: 1.2, k: 'brasa' }); }
+  L.cel = cel; return (VOX[fm] = L);
+}
+// posição de cada cubinho no instante t (+ tamanho); null = apagado neste quadro
+function voxPos(fm, v, t) {
+  let x = v.x, y = v.y, z = v.z;
+  if (v.k === 'orbita') { const a = v.f + t * .8; return [Math.cos(a) * 1.3, -.15 + .25 * Math.sin(a * 2 + v.f), Math.sin(a) * 1.3, 1.25]; }
+  if (v.k === 'brasa') { const u = (t * .45 + v.f / 6.28) % 1; return [x * (1 - u * .6) + .12 * Math.sin(t * 3 + v.f), -.55 - u * 1.05, z * (1 - u * .6), .9 * (1 - u)]; }
+  if (v.k === 'raio') { if (Math.sin(t * 9 + v.gr * 2.3) < -.25) return null; return [x + (Math.random() - .5) * .04, y + (Math.random() - .5) * .04, z, 1]; }
+  if (fm === 'fantasma' && y > .35) { const k = (y - .35) * 1.6; x += .06 * k * Math.sin(t * 3 + y * 5); y += .06 * k * Math.sin(Math.atan2(z, x) * 4 + t * 4); }
+  else if (fm === 'chama') { const up = Math.max(0, .3 - y); x += .09 * up * Math.sin(t * 8 + y * 6); z += .05 * up * Math.cos(t * 6.5 + y * 5); }
+  else if (fm === 'espirito' && y > .1) x += .13 * (y - .1) * Math.sin(t * 2.2 - y * 3);
+  return [x, y, z, 1];
+}
+function desenhaVoxel(fm, e, t, cx, cy, R, cs, sn, ci, si) {
+  const vs = voxForma(fm), lista = [];
+  const hal = g.createRadialGradient(cx, cy, R * .15, cx, cy, R * 1.5), ch = V.cor1.map((v) => v | 0).join();
+  hal.addColorStop(0, `rgba(${ch},.32)`); hal.addColorStop(.55, `rgba(${ch},.1)`); hal.addColorStop(1, `rgba(${ch},0)`);
+  g.globalCompositeOperation = 'lighter'; g.fillStyle = hal; g.fillRect(cx - R * 1.5, cy - R * 1.5, R * 3, R * 3); g.globalCompositeOperation = 'source-over';
+  for (const v of vs) {
+    const q = voxPos(fm, v, t); if (!q) continue;
+    let d = 1 + V.amp * .6 * Math.sin(t * 1.3 + v.f);
+    if (e === 'falando') d += V.nivel * .12 * (.5 + .5 * Math.sin(q[1] * 7 - t * 9));
+    else if (e === 'ouvindo') d += V.nivel * .15 * (.4 + .6 * Math.abs(Math.sin(v.f * 3 + t * 5)));
+    else if (e === 'pensando') d += .06 * Math.sin(q[1] * 9 + t * 7);
+    d += V.espalha;
+    const x = q[0] * cs - q[2] * sn, z = q[0] * sn + q[2] * cs, y2 = q[1] * ci - z * si, z2 = q[1] * si + z * ci;
+    lista.push([x * d, y2 * d, z2 * d, v, q[3]]);
+  }
+  lista.sort((a, b) => a[2] - b[2]);
+  const lado0 = R * vs.cel * .5 * .93;
+  for (const [x, y, z, v, sz] of lista) {
+    const prof = Math.max(0, Math.min(1, (z + 1.4) / 2.8)), l = lado0 * 2 * (.82 + prof * .32) * sz;
+    if (l < 1) continue;
+    let px = cx + x * R, py = cy + y * R;
+    const mdx = px - MOUSE.x, mdy = py - MOUSE.y, md = Math.hypot(mdx, mdy), alc = R * .55;
+    if (md < alc && md > .01) { const f = (1 - md / alc) ** 2 * R * .22; px += mdx / md * f; py += mdy / md * f; }
+    const mix = .5 + .5 * Math.sin(v.f + t * .6), luz = (.62 + prof * .55) * v.tom, bri = 34 * prof;
+    const c = (i) => Math.min(255, (V.cor1[i] * (1 - mix) + V.cor2[i] * mix) * luz + bri) | 0;
+    const r = c(0), gg = c(1), b = c(2);
+    g.fillStyle = `rgb(${r},${gg},${b})`; g.fillRect(px - l / 2, py - l / 2, l, l);
+    if (l < 5) continue;
+    const o = l * .28;
+    g.fillStyle = `rgb(${Math.min(255, r * 1.25 + 30) | 0},${Math.min(255, gg * 1.25 + 30) | 0},${Math.min(255, b * 1.25 + 30) | 0})`;
+    g.beginPath(); g.moveTo(px - l / 2, py - l / 2); g.lineTo(px - l / 2 + o, py - l / 2 - o); g.lineTo(px + l / 2 + o, py - l / 2 - o); g.lineTo(px + l / 2, py - l / 2); g.fill();
+    g.fillStyle = `rgb(${r * .62 | 0},${gg * .62 | 0},${b * .62 | 0})`;
+    g.beginPath(); g.moveTo(px + l / 2, py - l / 2); g.lineTo(px + l / 2 + o, py - l / 2 - o); g.lineTo(px + l / 2 + o, py + l / 2 - o); g.lineTo(px + l / 2, py + l / 2); g.fill();
+  }
+}
 // enfeites desenhados por cima: olhos do fantasma, raios da entidade elétrica
 function formaEnfeite(fm, cx, cy, R, t, e) {
   const redondo = corpoAtual() === 'luz' || corpoAtual() === 'liso';
@@ -805,8 +879,10 @@ function quadro(agora) {
   g.clearRect(0, 0, W, H);
   V.olhaX += ((MOUSE.dentro ? MOUSE.nx : 0) - V.olhaX) * .08; V.olhaY += ((MOUSE.dentro ? MOUSE.ny : 0) - V.olhaY) * .08;
   const t = agora / 1000, cs = Math.cos(V.rot + V.olhaX * 1.2), sn = Math.sin(V.rot + V.olhaX * 1.2), inc = .35 + V.olhaY * .9, ci = Math.cos(inc), si = Math.sin(inc);
+  const corpo = corpoAtual();
+  if (corpo === 'voxel') desenhaVoxel(fm, e, t, cx, cy, R, cs, sn, ci, si);
   const lista = [];
-  for (const p of pts) {
+  if (corpo !== 'voxel') for (const p of pts) {
     let d = 1 + V.amp * Math.sin(t * 1.3 * p.s + p.f);
     if (e === 'falando') d += V.nivel * .16 * (.5 + .5 * Math.sin(p.y * 7 - t * 9));     // pulsa com a voz sem estourar de tamanho
     else if (e === 'ouvindo') d += V.nivel * .2 * p.s * (.4 + .6 * Math.abs(Math.sin(p.f * 3 + t * 5)));
@@ -820,7 +896,7 @@ function quadro(agora) {
     lista.push([x * d, y2 * d, z2 * d, p]);
   }
   lista.sort((a, b) => a[2] - b[2]);
-  const base = Math.max(3, R * .052), corpo = corpoAtual();
+  const base = Math.max(3, R * .052);
   if (corpo === 'luz') { prepSprites(); g.globalCompositeOperation = 'lighter'; }
   for (const [x, y, z, p] of lista) {
     const prof = (z + 1.4) / 2.8, esc2 = .55 + prof * .75, l = base * esc2 * (.75 + .5 * p.s * .6);

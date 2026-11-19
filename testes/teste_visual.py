@@ -67,7 +67,7 @@ try:
         pg.evaluate("() => MAGO.aplica({forma: 'orbe'})")
         pg.click("#btVisual"); pg.wait_for_timeout(600)
         confere("menu Aparência mostra forma, estilo do corpo, cenário e as 7 classes",
-                pg.locator("#visual [data-forma]").count() == 5 and pg.locator("#visual [data-corpo]").count() == 4 and pg.locator("#visual [data-cenario]").count() >= 5 and pg.locator("#visual [data-roupa]").count() == 7)
+                pg.locator("#visual [data-forma]").count() == 5 and pg.locator("#visual [data-corpo]").count() == 5 and pg.locator("#visual [data-cenario]").count() >= 5 and pg.locator("#visual [data-roupa]").count() == 7)
         alturas = pg.evaluate("() => [...document.querySelectorAll('#visual [data-corj], #visual [data-forma]')].map(b => Math.round(b.getBoundingClientRect().height))")
         confere("cores do Jarvis do mesmo tamanho das formas", min(alturas) >= 36 and max(alturas) - min(alturas) <= 4, alturas)
         pg.locator("#visual").screenshot(path=os.path.join(FOTOS, "menu_aba_jarvis.png"))

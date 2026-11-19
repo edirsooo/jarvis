@@ -17,7 +17,7 @@
   const ROUPAS = [['torre', 'Mago da torre'], ['grimorio', 'Sábio'], ['cristal', 'Arcanista'], ['rpg', 'Aprendiz'],
     ['cavaleiro', 'Cavaleiro'], ['patrulheiro', 'Patrulheiro'], ['necro', 'Necromante']];
   const TEMAS = [['abismo', 'Abismo', '#c9a35a'], ['classico', 'Clássico', '#ff6b1a'], ['torre', 'Torre', '#c9772b'], ['grimorio', 'Grimório', '#5fa56f'], ['cristal', 'Cristal', '#8f6bff'], ['rpg', 'RPG', '#3f7bff']];
-  const V = { roupa: 'torre', tema: 'abismo', tam: 1, mini_sempre: false, forma: 'orbe', cenario: 'ruinas', cor: '', cor_jarvis: '', corpo: 'cubos' };
+  const V = { roupa: 'torre', tema: 'abismo', tam: 1, mini_sempre: false, forma: 'orbe', cenario: 'ruinas', cor: '', cor_jarvis: '', corpo: 'voxel' };
   const CORES = [['', 'Do tema'], ['#c9a35a', 'Ouro'], ['#ff6b1a', 'Brasa'], ['#d0574a', 'Sangue'], ['#58c48d', 'Esmeralda'], ['#5ad7ff', 'Gelo'], ['#9a7bff', 'Arcano'], ['#ff7ac8', 'Rosa']];
 
   // ----- desenho voxel: caixas [x, y, z, largura, altura, fundo, cor, flag]; x para a direita, y para cima, z para o fundo -----
@@ -489,7 +489,7 @@
     return out;
   }
   function tema() {
-    const a = q('#app'); a.dataset.tema = V.tema; a.dataset.forma = V.forma; a.dataset.cenario = V.cenario; a.dataset.corJarvis = V.cor_jarvis || ''; a.dataset.corpo = V.corpo || 'cubos';
+    const a = q('#app'); a.dataset.tema = V.tema; a.dataset.forma = V.forma; a.dataset.cenario = V.cenario; a.dataset.corJarvis = V.cor_jarvis || ''; a.dataset.corpo = V.corpo || 'voxel';
     if (V.cor) { a.style.setProperty('--destaque', V.cor); a.style.setProperty('--tinta', V.cor); }
     else { a.style.removeProperty('--destaque'); a.style.removeProperty('--tinta'); }
   }
@@ -528,7 +528,7 @@
     if (!m) {
       m = document.createElement('div'); m.id = 'visual'; m.hidden = true;
       const ICONE = { orbe: '#8a90a8', fantasma: '#cfe6f2', chama: '#ff8a3a', eletrica: '#7ab8ff', espirito: '#e8c46a', ruinas: 'linear-gradient(#151426,#4a3a36)', masmorra: 'linear-gradient(#2a221d,#5a1e14)', floresta: 'linear-gradient(#071613,#1a3a30)', torre: 'linear-gradient(#1a1430,#3a2a6a)', nenhum: 'transparent' };
-      const CORPO_ICO = { cubos: 'linear-gradient(135deg,#9aa4c4 0 50%,#5a6380 50%)', pixel: '#8a90a8', luz: 'radial-gradient(circle,#fff 0,#7ad7ff 35%,transparent 70%)', liso: 'radial-gradient(circle at 35% 35%,#cfd6ee,#59627e)' };
+      const CORPO_ICO = { voxel: 'radial-gradient(circle,#fff6d8 0,#ffc24a 30%,#8a5cff 62%,transparent 72%)', cubos: 'linear-gradient(135deg,#9aa4c4 0 50%,#5a6380 50%)', pixel: '#8a90a8', luz: 'radial-gradient(circle,#fff 0,#7ad7ff 35%,transparent 70%)', liso: 'radial-gradient(circle at 35% 35%,#cfd6ee,#59627e)' };
       const chip = (attr, k, n, fundo) => `<button ${attr}="${k}"><i class="amostra" style="background:${fundo}"></i>${n}</button>`;
       const cores = (attr, lista, livre, qual) => `<div class="vis-temas grade vis-cores ${qual}">${lista.map(([c, n, f]) => chip(attr, c, n, f || c)).join('')}<label class="vis-livre"><input type="color" value="${livre}">Outra cor</label></div>`;
       m.innerHTML = `<div class="vis-cab"><b>Aparência</b><span>Escolhas guardadas para a próxima vez</span></div>
