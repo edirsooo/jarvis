@@ -754,9 +754,9 @@ function formaEnfeite(fm, cx, cy, R, t, e) {
 }
 const V = { cor1: [70, 78, 100], cor2: [40, 44, 58], vel: .15, amp: .04, raio: .8, nivel: 0, rot: 0, espalha: 0 };
 const ALVO = {
-  dormindo: { vel: .12, amp: .03, raio: .72, espalha: 0 }, ouvindo: { vel: .35, amp: .05, raio: .92, espalha: .1 },
-  pensando: { vel: 1.6, amp: .1, raio: .8, espalha: .02 }, falando: { vel: .5, amp: .06, raio: .95, espalha: 0 },
-  trabalhando: { vel: .7, amp: .05, raio: .82, espalha: .04 }, mudo: { vel: .05, amp: .01, raio: .66, espalha: 0 },
+  dormindo: { vel: .12, amp: .03, raio: .72, espalha: 0 }, ouvindo: { vel: .35, amp: .04, raio: .78, espalha: .04 },
+  pensando: { vel: 1.6, amp: .08, raio: .76, espalha: .02 }, falando: { vel: .5, amp: .05, raio: .8, espalha: 0 },
+  trabalhando: { vel: .7, amp: .05, raio: .76, espalha: .03 }, mudo: { vel: .05, amp: .01, raio: .66, espalha: 0 },
 };
 function tamanho() {
   const r = devicePixelRatio || 1, b = cv.getBoundingClientRect();
@@ -799,7 +799,7 @@ function quadro(agora) {
   // coluna (com missões): a fala fica no alto e o mago no chão, então o orbe desce um pouco e cresce até a largura deixar
   const desvio = { fantasma: -.16, chama: .14 }[fm] || 0, flutua = (fm === 'fantasma' || fm === 'espirito') ? Math.sin(agora / 650) * .035 : 0;
   const cx = W / 2, cy0 = faixa ? H / 2 : coluna ? H * .54 : H * .4,
-    R = (faixa ? Math.min(W, H) * .42 : coluna ? Math.min(W * .35, H * .27) : Math.min(W, H * .9) * .3) * V.raio;   // .35: o anel de nível (1,42 R) cabe dentro da coluna
+    R = (faixa ? Math.min(W, H) * .42 : coluna ? Math.min(W * .35, H * .27) : Math.min(W, H * .9) * .27) * V.raio;   // .35: o anel de nível (1,42 R) cabe dentro da coluna
   const cy = cy0 + R * (desvio + flutua);
   V.cx = cx; V.cy = cy; V.R = R;
   g.clearRect(0, 0, W, H);
@@ -808,8 +808,8 @@ function quadro(agora) {
   const lista = [];
   for (const p of pts) {
     let d = 1 + V.amp * Math.sin(t * 1.3 * p.s + p.f);
-    if (e === 'falando') d += V.nivel * .34 * (.5 + .5 * Math.sin(p.y * 7 - t * 9));
-    else if (e === 'ouvindo') d += V.nivel * .5 * p.s * (.4 + .6 * Math.abs(Math.sin(p.f * 3 + t * 5)));
+    if (e === 'falando') d += V.nivel * .16 * (.5 + .5 * Math.sin(p.y * 7 - t * 9));     // pulsa com a voz sem estourar de tamanho
+    else if (e === 'ouvindo') d += V.nivel * .2 * p.s * (.4 + .6 * Math.abs(Math.sin(p.f * 3 + t * 5)));
     else if (e === 'pensando') d += .09 * Math.sin(p.y * 9 + t * 7);
     else if (e === 'trabalhando') d += .05 * Math.sin(Math.atan2(p.z, p.x) * 4 + t * 3);
     d += V.espalha * p.s;
