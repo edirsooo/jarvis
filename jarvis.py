@@ -1180,7 +1180,7 @@ class Jarvis:
             pc=any(str(x.modelo or "").lower() == "computador" for x in lista),
             estado=self.estado, mudo=self.mudo, nivel=round(self.nivel_mic, 3),
             legenda=self.legenda if self.estado == "falando" else "",
-            ativas=ativas, total=len(self.agentes.missoes), mago_v=VISUAL.get("v", 0), cor_jarvis=VISUAL.get("cor_jarvis") or "",
+            ativas=ativas, total=len(self.agentes.missoes), mago_v=VISUAL.get("v", 0), cor_jarvis=VISUAL.get("cor_jarvis") or "", forma=VISUAL.get("forma") or "orbe", corpo=VISUAL.get("corpo") or "voxel",
             # com o painel grande em uso, a esfera some (não cobre botão); volta quando ele vai para outra janela
             # painel grande aberto (mesmo sem foco, ex.: restaurado pela barra de tarefas): só uma esfera na tela
             painel_frente=self._painel_frente(), **janelas.estado_mini()))

@@ -42,6 +42,101 @@ def paleta_da_cor(cor, e):
             "trabalhando": [c, k(.7)], "mudo": [[120, 40, 50], [60, 30, 36]]}.get(e)
 
 
+# a esfera do canto segue a forma escolhida na tela grande (orbe, fantasma, chama, elétrica, espírito), em cubinhos de luz
+PALETA_FORMA = {
+    "fantasma": {"dormindo": [[120, 140, 170], [70, 80, 100]], "ouvindo": [[170, 240, 255], [240, 255, 255]], "pensando": [[220, 230, 255], [170, 180, 255]], "falando": [[200, 255, 240], [255, 255, 255]], "trabalhando": [[150, 255, 200], [220, 255, 240]], "mudo": [[110, 70, 80], [60, 40, 50]]},
+    "chama": {"dormindo": [[150, 50, 20], [90, 30, 14]], "ouvindo": [[255, 170, 60], [255, 240, 180]], "pensando": [[255, 120, 30], [255, 220, 90]], "falando": [[255, 140, 40], [255, 230, 150]], "trabalhando": [[255, 130, 40], [255, 200, 80]], "mudo": [[90, 40, 36], [50, 30, 28]]},
+    "eletrica": {"dormindo": [[60, 70, 140], [40, 40, 90]], "ouvindo": [[120, 220, 255], [240, 250, 255]], "pensando": [[180, 120, 255], [120, 220, 255]], "falando": [[140, 200, 255], [255, 255, 255]], "trabalhando": [[100, 160, 255], [200, 140, 255]], "mudo": [[70, 40, 70], [40, 30, 45]]},
+    "espirito": {"dormindo": [[150, 120, 60], [90, 70, 40]], "ouvindo": [[255, 220, 140], [255, 250, 220]], "pensando": [[255, 200, 90], [255, 160, 60]], "falando": [[255, 210, 120], [255, 245, 200]], "trabalhando": [[230, 200, 110], [140, 220, 160]], "mudo": [[90, 60, 50], [50, 40, 36]]},
+}
+VOX = {}
+
+
+def _dentro(fm):
+    def fant(x, y, z):
+        r = math.hypot(x, z)
+        if y < -.05:
+            return r * r + (y + .05) ** 2 / .9 <= .74
+        return r <= .86 and y <= .92 - .16 * (.5 + .5 * math.sin(math.atan2(z, x) * 4))
+
+    def chama(x, y, z):
+        r = math.hypot(x, z)
+        if y >= .25:
+            return r * r + (y - .25) ** 2 <= .6
+        k = (y + 1.25) / 1.5
+        return k > 0 and r <= .77 * k ** 1.25
+
+    def esp(x, y, z):
+        if x * x + (y + .3) ** 2 + z * z <= .34:
+            return True
+        for i in range(1, 8):
+            u = i / 7
+            px_, py_, rr = .38 * math.sin(u * 2.8), .1 + u * .95, .44 * (1 - u * .78)
+            if (x - px_) ** 2 + (y - py_) ** 2 + z * z <= rr * rr:
+                return True
+        return False
+    return {"fantasma": fant, "chama": chama, "espirito": esp,
+            "eletrica": lambda x, y, z: x * x + y * y + z * z <= .6}.get(fm, lambda x, y, z: x * x + y * y + z * z <= .92)
+
+
+def vox_forma(fm):
+    """casca de cubinhos da forma (grade 13x13x13, mais leve que a da tela grande) + enfeites: espinhos, órbitas, brasas"""
+    if fm in VOX:
+        return VOX[fm]
+    n, d = 13, _dentro(fm)
+    cel = 2.6 / n
+    P = lambda i: -1.3 + (i + .5) * cel
+    em = lambda i, j, k: 0 <= i < n and 0 <= j < n and 0 <= k < n and d(P(i), P(j), P(k))
+    L = []
+    for i in range(n):
+        for j in range(n):
+            for k in range(n):
+                if em(i, j, k) and not all(em(*q) for q in ((i + 1, j, k), (i - 1, j, k), (i, j + 1, k), (i, j - 1, k), (i, j, k + 1), (i, j, k - 1))):
+                    L.append((P(i), P(j), P(k), random.random() * 6.28, .82 + random.random() * .3, "corpo", 0))
+    if fm == "eletrica":
+        for a in range(10):
+            yy = 1 - (a + .5) / 5
+            rr = math.sqrt(max(0, 1 - yy * yy))
+            th = a * 2.39996
+            r = .82
+            while r < 1.36:
+                L.append((math.cos(th) * rr * r, yy * r, math.sin(th) * rr * r, random.random() * 6.28, 1.15, "raio", a))
+                r += cel
+    if fm == "espirito":
+        L += [(0, 0, 0, a / 6 * 6.28, 1.2, "orbita", 0) for a in range(6)]
+    if fm == "chama":
+        for _ in range(10):
+            th, r = random.random() * 6.28, random.random() * .45
+            L.append((math.cos(th) * r, 0, math.sin(th) * r, random.random() * 6.28, 1.2, "brasa", 0))
+    VOX[fm] = (L, cel)
+    return VOX[fm]
+
+
+def vox_pos(fm, c, t):
+    x, y, z, f, tom_, k, g = c
+    if k == "orbita":
+        a = f + t * .8
+        return math.cos(a) * 1.3, -.15 + .25 * math.sin(a * 2 + f), math.sin(a) * 1.3, 1.25
+    if k == "brasa":
+        u = (t * .45 + f / 6.28) % 1
+        return x * (1 - u * .6) + .12 * math.sin(t * 3 + f), -.55 - u * 1.05, z * (1 - u * .6), .9 * (1 - u)
+    if k == "raio":
+        if math.sin(t * 9 + g * 2.3) < -.25:
+            return None
+        return x + (random.random() - .5) * .04, y + (random.random() - .5) * .04, z, 1
+    if fm == "fantasma" and y > .35:
+        q = (y - .35) * 1.6
+        x += .06 * q * math.sin(t * 3 + y * 5)
+        y += .06 * q * math.sin(math.atan2(z, x) * 4 + t * 4)
+    elif fm == "chama":
+        up = max(0, .3 - y)
+        x += .09 * up * math.sin(t * 8 + y * 6)
+        z += .05 * up * math.cos(t * 6.5 + y * 5)
+    elif fm == "espirito" and y > .1:
+        x += .13 * (y - .1) * math.sin(t * 2.2 - y * 3)
+    return x, y, z, 1
+
+
 def buscar():
     falhas = 0
     while E["vivo"]:
@@ -91,14 +186,11 @@ def main():
     tela = tk.Canvas(raiz, width=L, height=A, bg=CHAVE, highlightthickness=0)
     tela.pack()
 
-    N = 120
-    pts = []
-    for i in range(N):
-        y = 1 - (i / (N - 1)) * 2
-        r = math.sqrt(max(0, 1 - y * y))
-        th = i * math.pi * (3 - math.sqrt(5))
-        pts.append((math.cos(th) * r, y, math.sin(th) * r, random.random() * 6.28, .6 + random.random() * .8))
-    itens = [(tela.create_rectangle(0, 0, 1, 1, width=0), tela.create_rectangle(0, 0, 1, 1, width=0)) for _ in range(N)]
+    N = 260                    # cubinhos reaproveitados: a forma escolhida usa só os que precisa, o resto fica escondido
+    itens = [(tela.create_rectangle(0, 0, 1, 1, width=0), tela.create_rectangle(0, 0, 1, 1, width=0), tela.create_polygon(0, 0, 0, 0, 0, 0, width=0)) for _ in range(N)]
+    # olhos do fantasminha e da bola de fogo (na frente da forma)
+    olhos = [tela.create_rectangle(0, 0, 1, 1, width=0, fill="#0e101e", state="hidden") for _ in range(2)]
+    brilhos = [tela.create_rectangle(0, 0, 1, 1, width=0, fill="#ffffff", state="hidden") for _ in range(2)]
     PLACA = px(104)            # altura da placa de baixo: estado, duas linhas de texto e os botões
     # mini mago: um conjunto de polígonos reaproveitados (3 faces por caixa), redesenhado só quando troca o quadro da pose
     sombra = tela.create_oval(0, 0, 1, 1, fill="#05060a", width=0, state="hidden", tags="mago")
@@ -237,7 +329,8 @@ def main():
         if e == "dormindo" and E["ativas"]:
             e = "trabalhando"
         vel, amp, raio = ALVO.get(e, ALVO["dormindo"])
-        pal = paleta_da_cor(E.get("cor_jarvis"), e) or PALETA.get(e, PALETA["dormindo"])
+        fm = E.get("forma") or "orbe"
+        pal = paleta_da_cor(E.get("cor_jarvis"), e) or (PALETA_FORMA.get(fm) or PALETA).get(e, PALETA["dormindo"])
         k = 1 - 0.02 ** dt
         v["vel"] += (vel - v["vel"]) * k
         v["amp"] += (amp - v["amp"]) * k
@@ -253,37 +346,55 @@ def main():
             nv = E["nivel"] * .2
         v["nivel"] += (nv - v["nivel"]) * (.5 if nv > v["nivel"] else .15)
         v["rot"] += dt * v["vel"]
-        cx, cy, R = LE / 2 + px(4), (A - PLACA) / 2 + px(2), (A - PLACA) * .37 * v["raio"]
+        cx, cy, R = LE / 2 + px(4), (A - PLACA) / 2 + px(2), (A - PLACA) * .34 * v["raio"]
+        cy += R * {"fantasma": -.08, "chama": .1}.get(fm, 0)
         cs, sn, ci, si = math.cos(v["rot"]), math.sin(v["rot"]), math.cos(.35), math.sin(.35)
+        vox, cel = vox_forma(fm)
         lista = []
-        for idx, (qx, qy, qz, f, s) in enumerate(pts):
-            d = 1 + v["amp"] * math.sin(agora * 1.3 * s + f)
+        for c in vox:
+            q = vox_pos(fm, c, agora)
+            if not q:
+                continue
+            qx, qy, qz, sz = q
+            f, s = c[3], c[4]
+            d = 1 + v["amp"] * .6 * math.sin(agora * 1.3 + f)
             if e == "falando":
-                d += v["nivel"] * .32 * (.5 + .5 * math.sin(qy * 7 - agora * 9))
+                d += v["nivel"] * .14 * (.5 + .5 * math.sin(qy * 7 - agora * 9))
             elif e == "ouvindo":
-                d += v["nivel"] * .5 * s * (.4 + .6 * abs(math.sin(f * 3 + agora * 5)))
+                d += v["nivel"] * .18 * (.4 + .6 * abs(math.sin(f * 3 + agora * 5)))
             elif e == "pensando":
-                d += .09 * math.sin(qy * 9 + agora * 7)
-            elif e == "trabalhando":
-                d += .05 * math.sin(math.atan2(qz, qx) * 4 + agora * 3)
+                d += .06 * math.sin(qy * 9 + agora * 7)
             x, z = qx * cs - qz * sn, qx * sn + qz * cs
             y2, z2 = qy * ci - z * si, qy * si + z * ci
-            lista.append((z2 * d, x * d, y2 * d, f, s))
+            lista.append((z2 * d, x * d, y2 * d, f, s * sz))
         lista.sort()
-        base = max(3.0, R * .085)
+        lado0 = R * cel * .93
+        usados = min(len(lista), N)
+        if estado_local.get("usados") != usados:      # esconde só os que sobraram (troca rara: muda a forma)
+            for i, par in enumerate(itens):
+                st = "normal" if i < usados else "hidden"
+                for it in par:
+                    tela.itemconfig(it, state=st)
+            estado_local["usados"] = usados
         n_q = estado_local["n_quadro"] = estado_local.get("n_quadro", 0) + 1
         # a ordem de desenho dos quadradinhos é fixa (o de trás primeiro): cada ponto, já ordenado pela profundidade,
         # entra no lugar certo da fila. Assim nunca é preciso reordenar o desenho, que era o que mais pesava
-        for (z, x, y, f, s), (frente, topo) in zip(lista, itens):
-            prof = (z + 1.4) / 2.8
-            l = base * (.55 + prof * .75)
+        for (z, x, y, f, s), (frente, topo, lado) in zip(lista, itens):
+            prof = max(0, min(1, (z + 1.4) / 2.8))
+            l = lado0 * (.82 + prof * .32) * (s if s < 1 else 1)
             X, Y = cx + x * R, cy + y * R
             mix = .5 + .5 * math.sin(f + agora * .6)
-            luz = .35 + prof * .75
-            c = [min(255, (int((v["cor1"][i] * (1 - mix) + v["cor2"][i] * mix) * luz) // 6) * 6) for i in range(3)]
-            c2 = [min(255, int(q * 1.4)) for q in c]
+            luz = (.62 + prof * .55) * min(1.2, s)
+            c = [min(255, (int((v["cor1"][i] * (1 - mix) + v["cor2"][i] * mix) * luz + 34 * prof) // 6) * 6) for i in range(3)]
+            c2 = [min(255, int(q * 1.25 + 30)) for q in c]
+            o = l * .28
             tela.coords(frente, X - l / 2, Y - l / 2, X + l / 2, Y + l / 2)
-            tela.coords(topo, X - l / 2, Y - l / 2 - l * .28, X + l / 2, Y - l / 2)
+            tela.coords(topo, X - l / 2, Y - l / 2 - o, X + l / 2, Y - l / 2)
+            tela.coords(lado, X + l / 2, Y - l / 2, X + l / 2 + o, Y - l / 2 - o, X + l / 2 + o, Y + l / 2 - o, X + l / 2, Y + l / 2)
+            cl = "#%02x%02x%02x" % tuple(max(int(q * .62), 4) for q in c)
+            if cores.get(lado) != cl:
+                cores[lado] = cl
+                tela.itemconfig(lado, fill=cl)
             # cada quadradinho recebe um ponto diferente a cada quadro: a cor vai junto, só quando muda
             cf = "#%02x%02x%02x" % tuple(max(q, 4) for q in c)
             ct = "#%02x%02x%02x" % tuple(max(q, 4) for q in c2)
@@ -293,6 +404,25 @@ def main():
             if cores.get(topo) != ct:
                 cores[topo] = ct
                 tela.itemconfig(topo, fill=ct)
+        # olhos: fantasma e bola de fogo têm rosto, que pisca de vez em quando
+        tem_rosto = fm in ("fantasma", "chama")
+        st = "normal" if tem_rosto else "hidden"
+        if estado_local.get("rosto") != st:
+            estado_local["rosto"] = st
+            for it in olhos + brilhos:
+                tela.itemconfig(it, state=st)
+        if tem_rosto:
+            Rf = R * (.82 if fm == "chama" else 1)
+            ey = cy + (R * .12 if fm == "chama" else -R * .02) - Rf * .06
+            w = Rf * .19
+            h = Rf * (.05 if (agora % 3.7) < .13 or e in ("dormindo", "mudo") else .28)
+            for s_, ol, br in ((-1, olhos[0], brilhos[0]), (1, olhos[1], brilhos[1])):
+                ox = cx + s_ * Rf * .3
+                tela.coords(ol, ox - w / 2, ey - h / 2, ox + w / 2, ey + h / 2)
+                b_ = w * .36 if h > Rf * .1 else 0
+                tela.coords(br, ox - w * .14 - b_ / 2, ey - h * .2 - b_ / 2, ox - w * .14 + b_ / 2, ey - h * .2 + b_ / 2)
+            for it in olhos + brilhos:
+                tela.tag_raise(it)
         mago(agora, e)          # o mago, a placa e os botões foram criados depois da esfera: já ficam na frente
         for it in BOTOES:
             est = "normal" if E["ativas"] else "hidden"
