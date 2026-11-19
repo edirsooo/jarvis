@@ -228,7 +228,7 @@ const ROT = { trabalhando: 'TRABALHANDO', concluida: '✔ PRONTA', erro: '✖ N�
 // resumo do agente sem marcação, emoji nem caminho de arquivo: só a primeira ideia
 function limpaTxt(s) {
   s = String(s || '').replace(/[*_`#>]/g, '').replace(/^\s*RESULTADO:\s*(OK|PARCIAL|FALHOU)[\s.:-]*/i, '').replace(/[\u{1F000}-\u{1FFFF}\u{2600}-\u{27BF}\u{FE0F}\u{2B00}-\u{2BFF}]/gu, '')
-    .replace(/[A-Z]:\\(?:[^\\\n"']*\\)*/g, '').replace(/\b(?:entregas|trabalho|telas)\\/g, '').replace(/\s+/g, ' ').trim();
+    .replace(/[A-Z]:\\(?:[^\\\n"']*\\)*/g, '').replace(/\/(?:Users|home|tmp|var|opt)\/(?:[^\s"'`]+\/)*/g, '').replace(/\b(?:entregas|trabalho|telas)[\\/]/g, '').replace(/\s+/g, ' ').trim();
   const frases = s.split(/(?<=[.!?])\s+/);
   let out = frases[0] || '';
   if (out.length < 60 && frases[1]) out += ' ' + frases[1];

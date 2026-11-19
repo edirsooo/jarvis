@@ -27,10 +27,14 @@ def get(caminho):
 
 
 amb = dict(os.environ)
-amb.update(JARVIS_TESTE=PASTA, JARVIS_PORTA="4793", JARVIS_CEREBRO="claude", PYTHONIOENCODING="utf-8", FALSO_DURA="30", JARVIS_ATUALIZA_FALSO="2")
-__import__("_cenario").preparar(PASTA, amb)
+amb.update(JARVIS_TESTE=PASTA, JARVIS_PORTA="4793", JARVIS_CEREBRO="claude", PYTHONIOENCODING="utf-8", FALSO_DURA="30",
+           JARVIS_ATUALIZA_FALSO="2", PYTHON=sys.executable)
+_cen = __import__("_cenario")
+_cen.preparar(PASTA, amb)
 FALSO = os.path.join(SAIDA, "falso")
 __import__("shutil").copytree(os.path.join(AQUI, "falso"), FALSO, dirs_exist_ok=True)
+if sys.platform != "win32":      # macOS e Linux: o falso é o script "claude" (sem extensão)
+    os.chmod(os.path.join(FALSO, "claude"), 0o755)
 amb["PATH"] = FALSO + os.pathsep + amb["PATH"]
 saida = open(os.path.join(PASTA, "servidor.log"), "w", encoding="utf-8")
 proc = subprocess.Popen([sys.executable, os.path.join(J, "jarvis.py"), "--sem-ouvido"], env=amb, cwd=PASTA, stdout=saida, stderr=subprocess.STDOUT)
@@ -42,7 +46,7 @@ try:
         except Exception:
             time.sleep(0.5)
     with sync_playwright() as p:
-        b = p.chromium.launch(channel="msedge")
+        b = _cen.abrir_navegador(p)
         pg = b.new_page(viewport={"width": 1600, "height": 900})
         pg.on("pageerror", lambda e: erros.append(str(e)))
         pg.goto(BASE + "/"); pg.wait_for_timeout(2500)
@@ -162,3 +166,4 @@ finally:
 confere("nenhum erro na página", not erros, erros[:3])
 print("TUDO CERTO" if ok_geral else "TEM FALHA")
 print(FOTOS)
+sys.exit(0 if ok_geral else 1)

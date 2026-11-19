@@ -1,7 +1,7 @@
 :root{
   --fundo:#0b0c10; --painel:#12141b; --borda:#262a36; --texto:#f2f3f5; --fraco:#8a90a0;
   --laranja:#ff6b1a; --ciano:#5ad7ff; --verde:#19c37d; --vermelho:#ff4d5e; --amarelo:#ffd23f;
-  --mono:"JetBrains Mono","Cascadia Mono",Consolas,monospace; --sans:"Poppins","Segoe UI",system-ui,sans-serif;
+  --mono:"JetBrains Mono","Cascadia Mono","SF Mono",Menlo,Consolas,"DejaVu Sans Mono",monospace; --sans:"Poppins",-apple-system,BlinkMacSystemFont,"Segoe UI",system-ui,sans-serif;
 }
 *{box-sizing:border-box}
 html,body{height:100%;margin:0;background:var(--fundo);color:var(--texto);font-family:var(--sans);overflow:hidden}

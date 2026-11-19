@@ -28,10 +28,13 @@ def get(caminho):
 
 amb = dict(os.environ)
 amb.update(JARVIS_TESTE=PASTA, JARVIS_PORTA="4792", JARVIS_CEREBRO="claude", PYTHONIOENCODING="utf-8", FALSO_DURA="14",
-           JARVIS_LEADS=os.path.join(PASTA, "dados", "leads"))
-__import__("_cenario").preparar(PASTA, amb)      # um projeto e duas conversas de mentira
+           JARVIS_LEADS=os.path.join(PASTA, "dados", "leads"), PYTHON=sys.executable)
+_cen = __import__("_cenario")
+_cen.preparar(PASTA, amb)      # um projeto e duas conversas de mentira
 FALSO = os.path.join(SAIDA, "falso")      # o Claude Code de mentira roda de uma pasta sem espaço nem "&" no caminho (o cmd não aceita)
 __import__("shutil").copytree(os.path.join(AQUI, "falso"), FALSO, dirs_exist_ok=True)
+if sys.platform != "win32":      # macOS e Linux: o falso é o script "claude" (sem extensão)
+    os.chmod(os.path.join(FALSO, "claude"), 0o755)
 amb["PATH"] = FALSO + os.pathsep + amb["PATH"]
 saida = open(os.path.join(PASTA, "servidor.log"), "w", encoding="utf-8")
 proc = subprocess.Popen([sys.executable, os.path.join(J, "jarvis.py"), "--sem-ouvido"], env=amb, cwd=PASTA, stdout=saida, stderr=subprocess.STDOUT)
@@ -47,7 +50,7 @@ try:
     json.dump({"resultados": [{"nome": "Academia Corpo & Mente", "nota": 4.9, "avaliacoes": 48}, {"nome": "Fit Center", "nota": 4.6, "avaliacoes": 120, "site": "https://fit.com.br"}]}, open(mp, "w", encoding="utf-8"))
     subprocess.run([sys.executable, os.path.join(J, "ferramentas", "leads.py"), "juntar", "academias", "Valinhos, SP", mp], env=amb, capture_output=True)
     with sync_playwright() as p:
-        b = p.chromium.launch(channel="msedge")
+        b = _cen.abrir_navegador(p)
         pg = b.new_page(viewport={"width": 1900, "height": 1030})
         pg.on("pageerror", lambda e: erros.append(str(e)))
         pg.on("console", lambda m: erros.append("console: " + m.text) if m.type == "error" and "favicon" not in m.text else None)
@@ -165,3 +168,4 @@ confere("o processo de exemplo ficou na pasta do teste", not os.path.exists(exem
 confere("nenhum erro na página", not erros, erros[:3])
 print("TUDO CERTO" if ok_geral else "TEM FALHA")
 print(FOTOS)
+sys.exit(0 if ok_geral else 1)

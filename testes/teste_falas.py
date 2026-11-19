@@ -138,6 +138,19 @@ async def main():
     confere("só pelo nome: não fica acordado depois da resposta", j.acordado_ate <= time.time())
     j.manter_acordado(forcar=True)
     confere("só pelo nome: clique no orbe ainda abre a escuta", j.acordado_ate > time.time() + 5)
+
+    # 7. limite de cota no Claude: não repete à toa e avisa direito (em vez de "Perdi o fio")
+    import cerebro as cerebro_mod
+    c = cerebro_mod.Cerebro(jarvis.CFG, lambda x: None)
+    chamadas = []
+
+    async def abrir_limite():
+        chamadas.append(1)
+        raise RuntimeError("You've hit your weekly limit · resets 5am")
+    c._abrir = abrir_limite
+    r_lim = await c.pensar("[dono] Oi")
+    confere("cota estourada: avisa que acabou sem repetir à toa", len(chamadas) == 1 and "cota" in r_lim["fala"].lower() and r_lim.get("erro"), r_lim["fala"])
     print("TUDO CERTO" if ok_geral else "TEM FALHA")
+    sys.exit(0 if ok_geral else 1)
 
 asyncio.run(main())

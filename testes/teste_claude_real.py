@@ -44,7 +44,7 @@ async def main():
     # 1. regras inteiras + modelo
     m, erro = await ag.criar("claude", "Prova das regras", (
         "Esta é uma conferência rápida, sem pesquisa e sem navegador. Faça só isto:\n"
-        "1. Crie o arquivo entregas\\prova.md com quatro linhas, copiadas das regras que você recebeu do Jarvis: "
+        "1. Crie o arquivo entregas/prova.md com quatro linhas, copiadas das regras que você recebeu do Jarvis: "
         "(a) o caminho completo da pasta da missão; (b) as três marcas de RESULTADO possíveis; (c) para onde vai um arquivo que não pode ser apagado; "
         "(d) o caminho completo da ferramenta leads.py.\n"
         "2. Escolha uma palavra secreta de fruta e NÃO a escreva em arquivo nenhum: só diga a palavra na sua mensagem final.\n"
@@ -78,8 +78,8 @@ async def main():
     modelos.clear()
     m3, erro = await ag.criar("claude", "Prova do ajuste", (
         "Conferência rápida, sem pesquisa. Faça nesta ordem, um comando por vez:\n"
-        "1. Rode `python -c \"import time; time.sleep(25)\"`.\n"
-        "2. Crie entregas\\cidade.txt com o nome da cidade: Campinas.\n"), nivel="leve")
+        f'1. Rode `"{sys.executable}" -c "import time; time.sleep(25)"`.\n'
+        "2. Crie entregas/cidade.txt com o nome da cidade: Campinas.\n"), nivel="leve")
     await asyncio.sleep(12)
     t0 = time.time()
     await ag.continuar(m3.n, "A cidade certa é Valinhos. Use esse nome no arquivo.")

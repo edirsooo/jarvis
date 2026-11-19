@@ -7,3 +7,6 @@ edge-tts>=6.1
 pystray
 pillow
 playwright
+# macOS e Linux: tela, mouse e teclado das missões de computador (no Windows o Jarvis usa a API do sistema)
+pyautogui; sys_platform != "win32"
+mss; sys_platform != "win32"

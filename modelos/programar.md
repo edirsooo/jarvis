@@ -15,4 +15,4 @@ Objetivo: fazer no projeto exatamente a tarefa pedida, do jeito que o projeto j�
 3. Faça a mudança menor que resolve. Se a tarefa for vaga ("revisa aquela funcionalidade"), use o pedido literal e as falas anteriores para descobrir qual é; se continuar ambíguo, faça só a revisão (lista do que achou) e não altere nada.
 4. Rode o que o projeto tem para conferir (testes, compilação, abrir a tela). Diga o que rodou e o resultado; se não deu para conferir, diga isso.
 5. Não faça commit, push, deploy nem publicação, a não ser que a tarefa peça com todas as letras.
-6. Escreva `entregas\resumo.md`: o que mudou (arquivos e por quê), como conferir e o que ficou pendente. Se mexeu em tela, salve uma captura em `entregas\depois.png`.
+6. Escreva `entregas/resumo.md`: o que mudou (arquivos e por quê), como conferir e o que ficou pendente. Se mexeu em tela, salve uma captura em `entregas/depois.png`.

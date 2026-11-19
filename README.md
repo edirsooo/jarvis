@@ -1,6 +1,6 @@
 # 🤖 Jarvis
 
-Assistente de voz para Windows que conversa com você e põe o **Claude Code** e o **Codex** para trabalhar no seu computador.
+Assistente de voz para Windows, macOS e Linux que conversa com você e põe o **Claude Code** e o **Codex** para trabalhar no seu computador.
 
 Você fala "Jarvis, ...". Ele responde em voz alta, numa frase, abre uma missão para um dos agentes e mostra na tela, ao vivo, o que cada um está fazendo e o que ficou pronto.
 
@@ -27,14 +27,15 @@ Ele usa as **suas** assinaturas (Claude e ChatGPT), pelos programas que já est�
 
 | | |
 |---|---|
-| Windows 10 ou 11 | obrigatório |
-| Python 3.10 ou mais novo ([python.org](https://www.python.org/downloads/), marcando "Add python.exe to PATH") | obrigatório |
+| Windows 10 ou 11, macOS 12 ou mais novo, ou Linux com área de trabalho (Ubuntu, Fedora, Arch...) | obrigatório (o que muda em cada um: "Windows, macOS e Linux", abaixo) |
+| Python 3.10 ou mais novo ([python.org](https://www.python.org/downloads/); no Windows, marcando "Add python.exe to PATH") | obrigatório |
 | [Claude Code](https://claude.com/claude-code) instalado e com a sua conta | obrigatório: é quem pensa e quem faz a maior parte das missões |
 | Codex (da OpenAI) instalado e com a sua conta | opcional: missões de imagem e as que você pedir com "Codex, ..." |
 | Microfone | opcional: sem ele, dá para escrever os pedidos no painel |
-| Placa NVIDIA | opcional: a transcrição fica mais rápida e mais precisa (ver "Transcrição na placa") |
+| Google Chrome, Microsoft Edge ou Chromium | recomendado: o painel abre numa janela própria (sem eles, abre no navegador padrão) |
+| Placa NVIDIA (Windows ou Linux) | opcional: a transcrição fica mais rápida e mais precisa (ver "Transcrição na placa") |
 | [Ollama](https://ollama.com) | opcional: cérebro local de reserva |
-| ffmpeg | opcional: fala sem a janela aberta e processo de corte de vídeo |
+| ffmpeg | opcional: fala sem a janela aberta no Windows/Linux (no macOS já usa o `afplay` nativo) e processo de corte de vídeo |
 
 ## Instalar
 
@@ -63,11 +64,31 @@ cd Jarvis
 python instalar.py
 ```
 
-O instalador pergunta o seu nome, instala os pacotes, confere Claude Code, Codex, navegador e microfone e cria o atalho **Jarvis** na área de trabalho. Pode rodar de novo quando quiser; `python instalar.py --conferir` só mostra o que falta.
+(No macOS e no Linux, `python3 instalar.py`.) O instalador pergunta o seu nome, instala os pacotes, confere Claude Code, Codex, navegador e microfone e cria o atalho **Jarvis** (área de trabalho no Windows e no macOS, menu de aplicativos no Linux). Pode rodar de novo quando quiser; `python instalar.py --conferir` só mostra o que falta.
+
+### Windows, macOS e Linux
+
+| | Windows | macOS | Linux |
+|---|---|---|---|
+| Abrir | atalho **Jarvis** ou `Jarvis.vbs` | dois cliques em `Jarvis.command` | menu de aplicativos ou `./jarvis.sh` |
+| Ver erros na tela | `Abrir Jarvis (com erros na tela).bat` | `./Jarvis.command --terminal` | `./jarvis.sh --terminal` |
+| Abrir junto com o sistema | `Ligar com o Windows.bat` | `python3 instalar.py --ligar-com-o-sistema` (LaunchAgent) | `python3 instalar.py --ligar-com-o-sistema` (`~/.config/autostart`) |
+| Pacotes do sistema que o instalador confere | nenhum | PortAudio, ffmpeg e Tk pelo [Homebrew](https://brew.sh), perguntando antes | PortAudio, `python3-tk`, ffmpeg, xdg-utils, wmctrl e xdotool (apt, dnf, pacman ou zypper, perguntando antes do `sudo`) |
+| Ícone de bandeja | ao lado do relógio | na barra de menus | na área de notificação (no GNOME, com a extensão AppIndicator) |
+
+O que muda fora do Windows:
+- **Voz, missões, painel, processos, projetos, atualização e cérebro local** funcionam igual nos três.
+- **Esfera flutuante:** no macOS fica transparente como no Windows; no Linux aparece num quadrado escuro (o Tk do Linux não tem fundo transparente). Fora do Windows, segurar SHIFT não prende a esfera, e o painel minimizado não é detectado: a esfera continua na tela junto com o painel.
+- **Trazer o painel para a frente e minimizar:** no macOS o sistema pede permissão de Automação na primeira vez; no Linux precisa do `wmctrl` ou do `xdotool`. Sem eles, o painel só abre (não vem para a frente nem minimiza sozinho).
+- **Missões que mexem no computador** (mouse, teclado e capturas, processo "computador"): precisam do `pyautogui` e do `mss` (o instalador põe os dois). No macOS, dê ao Terminal (ou ao Python) as permissões **Gravação de Tela** e **Acessibilidade** em Ajustes do Sistema > Privacidade e Segurança. No Linux funcionam em sessão **X11 (Xorg)** com `xdotool` e `wmctrl`; em sessão **Wayland** ficam desligadas (o sistema não deixa um programa ver a tela nem mexer no mouse de outros) e a missão recebe um aviso claro. Sem como confirmar qual janela está ativa, digitar e apertar teclas é recusado (nada é digitado às cegas).
+- **Acender a tela quando ele acorda por palmas:** macOS com `caffeinate`, Linux com `xset` (X11). Em Wayland, não acende.
+- **Transcrição na placa:** no macOS não há CUDA, a transcrição usa o processador; no Linux, com placa NVIDIA e CUDA instalada, ele usa a placa sozinho.
+- **Cotas na tela:** a do Claude vem do próprio Claude Code em qualquer sistema; a leitura extra do aplicativo do Claude só existe onde ele grava o histórico de uso.
+- No macOS, o microfone pede permissão na primeira vez que o Jarvis abre.
 
 ## Usar
 
-- Abra pelo atalho **Jarvis** (ou `Jarvis.vbs`). Aparece a janela do painel e um ícone ao lado do relógio.
+- Abra pelo atalho **Jarvis** (ou `Jarvis.vbs`; no macOS, `Jarvis.command`; no Linux, `jarvis.sh`). Aparece a janela do painel e um ícone ao lado do relógio (barra de menus no macOS).
 - Na primeira vez ele baixa o modelo de transcrição: pode levar alguns minutos até começar a ouvir. O painel mostra o microfone e o modelo de transcrição quando estiver pronto.
 - Diga **"Jarvis"** e faça o pedido. Depois de cada resposta ele fica alguns segundos ouvindo sem precisar repetir o nome.
 - **"Claude, ..."** manda para o Claude Code; **"Codex, ..."** manda para o Codex. Sem dizer o nome, ele escolhe.
@@ -76,7 +97,7 @@ O instalador pergunta o seu nome, instala os pacotes, confere Claude Code, Codex
 - Também dá para escrever no campo de baixo do painel.
 - "O que diz o relatório das academias?" faz ele ler a entrega da missão e responder em poucas frases.
 - **Parar tudo** na tela pede um segundo clique para confirmar; por voz, "para tudo" para na hora.
-- Para ver erros na tela: `Abrir Jarvis (com erros na tela).bat`. Para abrir junto com o Windows: `Ligar com o Windows.bat`.
+- Para ver erros na tela: `Abrir Jarvis (com erros na tela).bat` (macOS e Linux: o lançador com `--terminal`). Para abrir junto com o sistema: `Ligar com o Windows.bat` (macOS e Linux: `python3 instalar.py --ligar-com-o-sistema`).
 - Fechar de verdade: botão direito no ícone ao lado do relógio, "Fechar o Jarvis".
 
 Exemplos de pedido:
@@ -125,7 +146,7 @@ A cada 6 horas o Jarvis confere no GitHub se saiu versão nova (`git fetch`). Qu
 
 ### Transcrição na placa
 
-Sem placa NVIDIA, a transcrição usa o processador com o modelo `small`. Com placa, instale o PyTorch com CUDA (ele traz as bibliotecas que a transcrição precisa) e o Jarvis passa a usar o `large-v3-turbo` sozinho:
+Sem placa NVIDIA, a transcrição usa o processador com o modelo `small`. Com placa (Windows ou Linux), instale o PyTorch com CUDA (ele traz as bibliotecas que a transcrição precisa) e o Jarvis passa a usar o `large-v3-turbo` sozinho:
 
 ```
 pip install torch --index-url https://download.pytorch.org/whl/cu128
@@ -137,10 +158,10 @@ Leia antes de usar:
 
 - **Os agentes agem no seu computador sem pedir confirmação a cada passo.** As missões do Claude Code rodam com `--permission-mode bypassPermissions` (opção `claude_permissao` do `config.json`) e as do Codex com `workspace-write`. Eles podem criar e alterar arquivos e rodar comandos. Use numa máquina e com contas em que você aceita isso.
 - As regras de toda missão proíbem apagar arquivo, enviar e-mail ou mensagem, publicar, comprar e instalar programas, e o Jarvis pede confirmação por voz antes de delegar algo assim. Isso é instrução para a IA, não uma trava técnica.
-- O processo "computador" mexe no mouse e no teclado à sua vista. Levar o mouse ao canto de cima à esquerda da tela para na hora.
+- O processo "computador" mexe no mouse e no teclado à sua vista. Levar o mouse ao canto de cima à esquerda da tela para na hora (nos três sistemas).
 - O servidor só atende no próprio computador (`127.0.0.1`) e recusa pedidos vindos de outros sites abertos no navegador.
 - Os sites que as missões entregam abrem isolados no painel: rodam, mas não conseguem falar com o Jarvis (um texto copiado da web num site gerado não vira pedido).
-- "Abre tal arquivo" por voz não executa programa nem script (`.exe`, `.bat`, `.ps1`...): abre a pasta com o arquivo marcado.
+- "Abre tal arquivo" por voz não executa programa nem script (`.exe`, `.bat`, `.ps1`, `.sh`, `.command`, `.app`, `.desktop`, arquivo marcado como executável...): abre a pasta com o arquivo marcado.
 - **O que sai do computador:** o texto dos seus pedidos vai para a Anthropic e a OpenAI pelos programas deles (Claude Code e Codex), e o texto que ele fala vai para o serviço de voz do Edge (Microsoft). O áudio do microfone é transcrito no seu computador e não é enviado.
 - Cada missão gasta a cota das suas assinaturas. Processo agendado também.
 
@@ -151,6 +172,8 @@ A pasta `testes\` roda o Jarvis numa cópia isolada (outra porta, pasta temporá
 ```
 python testes\teste_servidor.py
 ```
+
+`python testes\teste_plataformas.py` simula o macOS e o Linux a partir de qualquer computador (confere que tudo carrega e que cada sistema cai no caminho certo).
 
 ## Como é por dentro
 
@@ -164,7 +187,8 @@ python testes\teste_servidor.py
 | `conversas.py` | projetos cadastrados e conversas numeradas do Claude Code |
 | `voz.py` | fala (Edge TTS) |
 | `janelas.py`, `mini.py` | janela do painel e esfera flutuante |
-| `ferramentas\` | navegador com capturas, planilha de leads, mouse e teclado |
+| `plataforma.py` | o que muda entre Windows, macOS e Linux (abrir arquivo, navegador, processos, pastas) |
+| `ferramentas\` | navegador com capturas, planilha de leads, mouse e teclado (`pc.py`; no macOS e no Linux, com `pc_posix.py`) |
 | `web\` | o painel (HTML, CSS e JavaScript puros) |
 
 ## Licença

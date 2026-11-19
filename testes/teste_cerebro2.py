@@ -22,7 +22,7 @@ CASOS = [
     ("processo com parâmetros", PRONTA, "[dono] Faz a prospecção dos dentistas de Sorocaba, São Paulo.",
      lambda r, a: a and a[0].get("tipo") == "processo" and a[0].get("id") == "prospeccao" and "dentista" in json.dumps(a[0], ensure_ascii=False).lower() and "sorocaba" in json.dumps(a[0], ensure_ascii=False).lower()),
     ("ajuste na missão rodando", RODANDO, "[dono] Na 14, é Valinhos, não Campinas.",
-     lambda r, a: a and a[0].get("tipo") == "continuar" and str(a[0].get("missao")) == "14" and "santa amélia" in a[0].get("instrucao", "").lower()),
+     lambda r, a: a and a[0].get("tipo") == "continuar" and str(a[0].get("missao")) == "14" and "valinhos" in a[0].get("instrucao", "").lower()),
     ("programar num projeto", PRONTA, "[dono] Na Loja, corrige o botão de vender que não está clicando.",
      lambda r, a: a and a[0].get("tipo") in ("processo", "delegar") and "loja" in str(a[0].get("projeto", "")).lower()),
     ("conversa numerada", PRONTA, "[dono] Na conversa 7, pede para continuar o desenvolvimento.",

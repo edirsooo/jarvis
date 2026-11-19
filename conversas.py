@@ -84,7 +84,7 @@ def projetos_para_o_cerebro():
 
 
 # ---------- conversas do Claude Code ----------
-FORA = ("jarvis-missoes", "jarvis-dados-cerebro", "scratch-workspaces", "appdata-local-temp", "-teste-")
+FORA = ("jarvis-missoes", "jarvis-dados-cerebro", "scratch-workspaces", "appdata-local-temp", "jarvis-testes", "jarvis_testes", "-teste-")
 
 
 _CABECAS = {}      # arquivo -> ((mtime, tamanho), (título, pasta, última pergunta)): só relê o que mudou

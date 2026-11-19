@@ -1,0 +1,13 @@
+# Exemplo de atalho do Jarvis no Linux. O "python3 instalar.py" já cria um igual, com os caminhos certos,
+# em ~/.local/share/applications/jarvis.desktop. Para fazer à mão: troque /caminho/do/Jarvis pela pasta do Jarvis,
+# salve em ~/.local/share/applications/jarvis.desktop e, para abrir junto com o sistema, copie também para
+# ~/.config/autostart/jarvis.desktop.
+[Desktop Entry]
+Type=Application
+Name=Jarvis
+Comment=Assistente de voz
+Exec="/caminho/do/Jarvis/jarvis.sh"
+Path=/caminho/do/Jarvis
+Icon=/caminho/do/Jarvis/web/icone.png
+Terminal=false
+Categories=Utility;

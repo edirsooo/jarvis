@@ -1,0 +1,3 @@
+#!/bin/sh
+# Claude Code de mentira para os testes no macOS e no Linux (no Windows vale o claude.cmd).
+exec "${PYTHON:-python3}" "$(dirname "$0")/fake_claude.py" "$@"

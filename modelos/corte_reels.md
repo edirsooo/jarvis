@@ -15,5 +15,5 @@ Objetivo: tirar de um vídeo longo um corte vertical de até 60 s, pronto para p
 3. Padrão do corte: 1080x1920, conteúdo importante longe das bordas (deixe margem para os botões do aplicativo), legenda grande e legível com sombra ou contorno, áudio em −14 LUFS, nunca deformar a proporção.
 4. Monte o corte em 1080x1920. Se o original for horizontal, enquadre a pessoa sem cortar o rosto, ou use moldura; nada de vídeo pequeno entre faixas pretas.
 5. Render final com o ffmpeg, um render por vez (não dispare dois ao mesmo tempo).
-6. Salve em `entregas\corte.mp4` e uma capa em `entregas\capa.png` (quadro montado, não quadro solto).
+6. Salve em `entregas/corte.mp4` e uma capa em `entregas/capa.png` (quadro montado, não quadro solto).
 7. Confira duração, resolução e loudness do arquivo final e diga os números no resumo.

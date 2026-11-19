@@ -1,6 +1,7 @@
 """Cotas das assinaturas, lidas do próprio computador (arquivos que o Claude Code, o aplicativo do Claude e o Codex já gravam). Nada é enviado para fora."""
 import asyncio, datetime, glob, json, os, shutil, time
 import configuracao
+import plataforma
 
 
 def _janela(nome, usado, renova=None, fonte=""):
@@ -11,11 +12,11 @@ def _janela(nome, usado, renova=None, fonte=""):
 # ---------- Claude ----------
 def _claude_statusline():
     """Arquivo que a linha de status do Claude Code grava, quando há um monitor de cotas instalado."""
-    arq = os.path.join(os.environ.get("LOCALAPPDATA", ""), "AIUsageMonitor", "claude-limits.json")
+    arq = os.path.join(plataforma.pasta_dados_locais(), "AIUsageMonitor", "claude-limits.json")
     try:
         with open(arq, encoding="utf-8-sig") as f:
             d = json.load(f)
-        quando = datetime.datetime.fromisoformat(d["captured_at"][:26].rstrip("Z") + "+00:00" if "+" not in d["captured_at"] else d["captured_at"][:19] + "+00:00").timestamp()
+        quando = datetime.datetime.fromisoformat(str(d["captured_at"]).replace("Z", "+00:00")).timestamp()
         lim = d.get("rate_limits") or {}
         out = {}
         for chave, k in (("five_hour", "5h"), ("seven_day", "semana")):
@@ -29,9 +30,9 @@ def _claude_statusline():
 
 def _claude_app():
     """Histórico de uso do aplicativo do Claude: amostras a cada 15 min (fh = 5 horas, sd = semana)."""
-    base = os.environ.get("LOCALAPPDATA", "")
+    base = plataforma.pasta_dados_locais()      # macOS e Linux: o mesmo arquivo, se o app do Claude gravar lá
     arqs = glob.glob(os.path.join(base, "Claude-Data", "*", "plan-usage-history.json"))
-    arqs.append(os.path.join(os.environ.get("APPDATA", ""), "Claude", "plan-usage-history.json"))
+    arqs.append(os.path.join(plataforma.pasta_config_apps(), "Claude", "plan-usage-history.json"))
     arqs = [a for a in arqs if os.path.exists(a)]
     if not arqs:
         return 0, {}
@@ -122,7 +123,7 @@ async def codex():
     try:
         proc = await configuracao.abrir_programa(
             exe, args, stdin=asyncio.subprocess.PIPE, stdout=asyncio.subprocess.PIPE,
-            stderr=asyncio.subprocess.DEVNULL, creationflags=0x08000000, limit=8 * 1024 * 1024)
+            stderr=asyncio.subprocess.DEVNULL, limit=8 * 1024 * 1024, **plataforma.sem_janela())
 
         async def manda(o):
             proc.stdin.write((json.dumps(o) + "\n").encode())

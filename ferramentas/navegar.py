@@ -43,7 +43,18 @@ def navegador(p, celular=False, largura=1366):
         except Exception:
             continue
     if b is None:
-        sys.exit("Não achei Edge nem Chrome para abrir páginas.")
+        # Linux/macOS com Chromium ou Brave instalado no sistema (sem Chrome/Edge nem Chromium do Playwright)
+        try:
+            sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
+            import plataforma
+            exe = plataforma.navegador()
+            if exe:
+                b = p.chromium.launch(executable_path=exe, headless=escondido)
+        except Exception:
+            pass
+    if b is None:
+        sys.exit("Não achei Edge, Chrome, Chromium nem o navegador do Playwright para abrir páginas. "
+                 "Instale um deles ou rode: python -m playwright install chromium")
     if celular:
         ctx = b.new_context(viewport={"width": 390, "height": 844}, device_scale_factor=2, is_mobile=True,
                             locale="pt-BR", user_agent="Mozilla/5.0 (iPhone; CPU iPhone OS 17_0 like Mac OS X) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/17.0 Mobile/15E148 Safari/604.1")
@@ -54,7 +65,7 @@ def navegador(p, celular=False, largura=1366):
 
 def ir(pg, url):
     if os.path.exists(url):
-        url = "file:///" + os.path.abspath(url).replace("\\", "/")
+        url = __import__("pathlib").Path(os.path.abspath(url)).as_uri()      # file:///C:/... ou file:///home/...
     elif not re.match(r"^[a-z]+://", url):
         url = "https://" + url
     try:

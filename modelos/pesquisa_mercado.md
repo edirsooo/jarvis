@@ -13,5 +13,5 @@ Objetivo: entender o mercado de {nicho} em {cidade} e entregar um relatório que
 1. Se já existe planilha de leads desse nicho e cidade (`leads.py lista "{nicho}" "{cidade}"`), comece por ela em vez de buscar tudo de novo. Senão, `navegar.py maps "{nicho} em {cidade}" --max 25`.
 2. Para os 6 a 10 mais relevantes, levante só o que é público: nome, bairro, nota e número de avaliações, serviços, preços quando publicados, horários, site e Instagram. Abra os sites com `navegar.py abrir`.
 3. Não invente número. O que não achou, escreva "não informado".
-4. `entregas\relatorio.md`: resumo em 5 linhas no topo; tabela comparativa; o que os melhores fazem de diferente; lacunas (o que ninguém oferece ou comunica bem); 3 oportunidades concretas para {dono}.
+4. `entregas/relatorio.md`: resumo em 5 linhas no topo; tabela comparativa; o que os melhores fazem de diferente; lacunas (o que ninguém oferece ou comunica bem); 3 oportunidades concretas para {dono}.
 5. Marco no meio: `MARCO: Levantei N concorrentes.`

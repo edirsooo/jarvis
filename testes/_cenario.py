@@ -18,3 +18,19 @@ def preparar(pasta, amb):
             f.write(json.dumps({"type": "user", "cwd": loja}) + "\n")
     amb["JARVIS_SESSOES"] = sessoes
     return loja
+
+
+def abrir_navegador(p):
+    """Abre um navegador Chromium para os testes de tela em Windows, macOS e Linux (Edge, Chrome, Playwright ou Chromium do sistema)."""
+    for canal in ("msedge", "chrome", None):
+        try:
+            return p.chromium.launch(channel=canal) if canal else p.chromium.launch()
+        except Exception:
+            continue
+    import sys
+    sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
+    import plataforma
+    exe = plataforma.navegador()
+    if exe:
+        return p.chromium.launch(executable_path=exe)
+    raise RuntimeError("Não achei Edge, Chrome, Chromium nem o navegador do Playwright para rodar o teste.")

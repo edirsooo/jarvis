@@ -4,3 +4,10 @@
 *.vbs text eol=crlf
 *.png binary
 *.ico binary
+
+# lançadores de macOS e Linux: sempre com fim de linha LF
+*.sh text eol=lf
+*.command text eol=lf
+*.desktop text eol=lf
+*.desktop.exemplo text eol=lf
+testes/falso/claude text eol=lf

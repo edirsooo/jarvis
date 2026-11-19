@@ -12,7 +12,12 @@ BASE = f"http://127.0.0.1:{PORTA}"
 L, A = 300, 312
 ESF = 236                  # largura da área da esfera (à esquerda); o mini mago fica em pé à direita, olhando para ela
 KX, KY = 0.34, 0.3
-CHAVE = "#010203"          # cor que vira transparente
+CHAVE = "#010203"          # cor que vira transparente (Windows); no macOS o fundo é transparente de verdade
+WIN, MAC = sys.platform == "win32", sys.platform == "darwin"
+if not WIN and not MAC:
+    CHAVE = "#0b0c10"      # Linux: o Tk não tem cor transparente; a esfera fica num quadro escuro
+MONO = "Consolas" if WIN else "Menlo" if MAC else "DejaVu Sans Mono"
+SANS = "Segoe UI" if WIN else "Helvetica Neue" if MAC else "DejaVu Sans"
 E = {"estado": "dormindo", "mudo": False, "nivel": 0.0, "legenda": "", "ativas": 0, "total": 0, "acao": "", "quem": "", "pc": False, "canto": "dir-baixo", "fixo": False, "vivo": True, "mago_v": 0}
 MAGO = {"v": None, "poses": None}       # poses desenhadas pela tela grande (mago.js), lidas de /api/visual?poses=1
 
@@ -171,7 +176,7 @@ def main():
         ctypes.windll.shcore.SetProcessDpiAwareness(1)
     except Exception:
         pass
-    u32 = ctypes.windll.user32
+    u32 = ctypes.windll.user32 if WIN else None
     raiz = tk.Tk()
     global L, A
     esc = max(1.0, raiz.winfo_fpixels("1i") / 96)      # tela em 150% → tudo 1,5x
@@ -181,9 +186,26 @@ def main():
     raiz.title("Jarvis · esfera")
     raiz.overrideredirect(True)
     raiz.attributes("-topmost", True)
-    raiz.configure(bg=CHAVE)
-    raiz.attributes("-transparentcolor", CHAVE)
-    tela = tk.Canvas(raiz, width=L, height=A, bg=CHAVE, highlightthickness=0)
+    fundo = CHAVE
+    try:
+        if WIN:
+            raiz.configure(bg=CHAVE)
+            raiz.attributes("-transparentcolor", CHAVE)
+        elif MAC:
+            fundo = "systemTransparent"
+            raiz.attributes("-transparent", True)
+            raiz.configure(bg=fundo)
+        else:
+            raiz.configure(bg=CHAVE)
+    except tk.TclError:          # Tk antigo sem transparência: fica com o quadro escuro
+        fundo = "#0b0c10"
+        raiz.configure(bg=fundo)
+    try:
+        tela = tk.Canvas(raiz, width=L, height=A, bg=fundo, highlightthickness=0)
+    except tk.TclError:
+        fundo = "#0b0c10"
+        raiz.configure(bg=fundo)
+        tela = tk.Canvas(raiz, width=L, height=A, bg=fundo, highlightthickness=0)
     tela.pack()
 
     N = 260                    # cubinhos reaproveitados: a forma escolhida usa só os que precisa, o resto fica escondido
@@ -239,15 +261,15 @@ def main():
             tela.itemconfig(poli[j], state="hidden")
         return True
     placa = tela.create_rectangle(px(8), A - PLACA, L - px(8), A - px(6), fill="#0b0c10", outline="#ff6b1a", width=2)
-    rot = tela.create_text(L / 2, A - PLACA + px(13), text="", fill="#8a90a0", font=("Consolas", 8, "bold"))
-    leg = tela.create_text(L / 2, A - PLACA + px(42), text="", fill="#f2f3f5", font=("Segoe UI", 8), width=L - px(28), justify="center")
+    rot = tela.create_text(L / 2, A - PLACA + px(13), text="", fill="#8a90a0", font=(MONO, 8, "bold"))
+    leg = tela.create_text(L / 2, A - PLACA + px(42), text="", fill="#f2f3f5", font=(SANS, 8), width=L - px(28), justify="center")
     # botões (só com missão rodando): [x0, y0, x1, y1]
     B_PARAR = (px(14), A - px(36), L / 2 - px(3), A - px(12))
     B_ABRIR = (L / 2 + px(3), A - px(36), L - px(14), A - px(12))
     bp = tela.create_rectangle(*B_PARAR, fill="#ff6b1a", outline="#ff6b1a")
-    bpt = tela.create_text((B_PARAR[0] + B_PARAR[2]) / 2, (B_PARAR[1] + B_PARAR[3]) / 2, text="■ PARAR", fill="#000000", font=("Consolas", 8, "bold"))
+    bpt = tela.create_text((B_PARAR[0] + B_PARAR[2]) / 2, (B_PARAR[1] + B_PARAR[3]) / 2, text="■ PARAR", fill="#000000", font=(MONO, 8, "bold"))
     ba = tela.create_rectangle(*B_ABRIR, fill="#14161d", outline="#8a90a0")
-    bat = tela.create_text((B_ABRIR[0] + B_ABRIR[2]) / 2, (B_ABRIR[1] + B_ABRIR[3]) / 2, text="▣ ABRIR", fill="#f2f3f5", font=("Consolas", 8, "bold"))
+    bat = tela.create_text((B_ABRIR[0] + B_ABRIR[2]) / 2, (B_ABRIR[1] + B_ABRIR[3]) / 2, text="▣ ABRIR", fill="#f2f3f5", font=(MONO, 8, "bold"))
     BOTOES = (bp, bpt, ba, bat)
     dentro = lambda r, ev: r[0] <= ev.x <= r[2] and r[1] <= ev.y <= r[3]
 
@@ -262,6 +284,12 @@ def main():
         _fields_ = [("x", ctypes.c_long), ("y", ctypes.c_long)]
 
     def area():
+        if not WIN:
+            # macOS e Linux: a tela principal inteira, com folga para a barra de menus/painel e o Dock
+            mx, my = raiz.winfo_pointerxy()
+            sw, sh = raiz.winfo_screenwidth(), raiz.winfo_screenheight()
+            cima, baixo = (px(28), px(80)) if MAC else (px(32), px(8))
+            return (0, cima, sw, sh - baixo), (mx, my)
         p = PT()
         u32.GetCursorPos(ctypes.byref(p))
         u32.MonitorFromPoint.restype = ctypes.c_void_p
@@ -279,14 +307,14 @@ def main():
     estado_local = {"canto": E["canto"], "alvo": None, "ult_fuga": 0.0}
     ar, _ = area()
     x0, y0 = pos(estado_local["canto"], ar)
-    raiz.geometry(f"{L}x{A}+{x0}+{y0}")
+    raiz.geometry(f"{L}x{A}{int(x0):+d}{int(y0):+d}")
 
     def pressionar(ev):
         arr.update(x=ev.x_root - raiz.winfo_x(), y=ev.y_root - raiz.winfo_y(), moveu=False, ativo=True)
 
     def arrastar(ev):
         arr["moveu"] = True
-        raiz.geometry(f"+{ev.x_root - arr['x']}+{ev.y_root - arr['y']}")
+        raiz.geometry(f"{int(ev.x_root - arr['x']):+d}{int(ev.y_root - arr['y']):+d}")
 
     def soltar(ev):
         arr["ativo"] = False
@@ -302,6 +330,8 @@ def main():
     tela.bind("<B1-Motion>", arrastar)
     tela.bind("<ButtonRelease-1>", soltar)
     tela.bind("<Button-3>", lambda ev: chamar("/api/mudo"))
+    if MAC:      # no macOS o botão direito do mouse é o Button-2 do Tk
+        tela.bind("<Button-2>", lambda ev: chamar("/api/mudo"))
 
     def quadro():
         if not E["vivo"]:
@@ -450,8 +480,11 @@ def main():
         try:
             ar, (mx, my) = area()
             wx, wy = raiz.winfo_x(), raiz.winfo_y()
-            shift = bool(u32.GetAsyncKeyState(0x10) & 0x8000)
-            botao = bool(u32.GetAsyncKeyState(0x01) & 0x8000)
+            if WIN:
+                shift = bool(u32.GetAsyncKeyState(0x10) & 0x8000)
+                botao = bool(u32.GetAsyncKeyState(0x01) & 0x8000)
+            else:      # fora do Windows não dá para ler o teclado de outra janela: SHIFT não segura a esfera
+                shift, botao = False, arr["ativo"]
             if E["canto"] != estado_local.get("pedido"):
                 estado_local["pedido"] = E["canto"]
                 estado_local["canto"] = E["canto"]
@@ -469,7 +502,7 @@ def main():
                 if abs(al[0] - wx) < 3 and abs(al[1] - wy) < 3:
                     nx, ny = al
                     estado_local["alvo"] = None
-                raiz.geometry(f"+{int(nx)}+{int(ny)}")
+                raiz.geometry(f"{int(nx):+d}{int(ny):+d}")
         except Exception:
             pass
         raiz.after(45 if e in ("dormindo", "mudo") else 33, quadro)

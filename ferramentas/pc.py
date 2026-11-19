@@ -34,14 +34,23 @@ Travas:
   os comandos param de agir.
 
 A pasta da missão vem da variável JARVIS_MISSAO (ou a pasta atual).
+
+No macOS e no Linux (X11) os mesmos comandos funcionam por pc_posix.py: precisam do pyautogui (mouse e teclas),
+das permissões de Gravação de Tela e Acessibilidade no macOS, e do xdotool e do wmctrl no Linux. Em Linux com
+Wayland puro o controle fica desligado (o sistema não permite). "win" vira a tecla Command no macOS.
 """
 import ctypes, json, os, re, subprocess, sys, time
-from ctypes import wintypes
 
-try:
-    ctypes.windll.shcore.SetProcessDpiAwareness(2)
-except Exception:
-    pass
+WIN = sys.platform == "win32"
+if WIN:
+    from ctypes import wintypes
+    try:
+        ctypes.windll.shcore.SetProcessDpiAwareness(2)
+    except Exception:
+        pass
+else:       # macOS e Linux: mesma interface, feita com Pillow, pyautogui, xdotool/wmctrl ou AppleScript
+    sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
+    import pc_posix as PX
 
 MISSAO = os.environ.get("JARVIS_MISSAO") or os.getcwd()
 TELAS = os.path.join(MISSAO, "telas")
@@ -50,33 +59,36 @@ ARQ_ESTADO = os.path.join(TRAB, "pc_estado.json")
 ARQ_LOG = os.path.join(TRAB, "pc_acoes.log")
 LARGURA_MAX = 1280
 
-u32 = ctypes.windll.user32
-ULONG_PTR = ctypes.c_size_t
+if WIN:
+    u32 = ctypes.windll.user32
+    ULONG_PTR = ctypes.c_size_t
 
 
-class MOUSEINPUT(ctypes.Structure):
-    _fields_ = [("dx", wintypes.LONG), ("dy", wintypes.LONG), ("mouseData", wintypes.DWORD),
-                ("dwFlags", wintypes.DWORD), ("time", wintypes.DWORD), ("dwExtraInfo", ULONG_PTR)]
+    class MOUSEINPUT(ctypes.Structure):
+        _fields_ = [("dx", wintypes.LONG), ("dy", wintypes.LONG), ("mouseData", wintypes.DWORD),
+                    ("dwFlags", wintypes.DWORD), ("time", wintypes.DWORD), ("dwExtraInfo", ULONG_PTR)]
 
 
-class KEYBDINPUT(ctypes.Structure):
-    _fields_ = [("wVk", wintypes.WORD), ("wScan", wintypes.WORD), ("dwFlags", wintypes.DWORD),
-                ("time", wintypes.DWORD), ("dwExtraInfo", ULONG_PTR)]
+    class KEYBDINPUT(ctypes.Structure):
+        _fields_ = [("wVk", wintypes.WORD), ("wScan", wintypes.WORD), ("dwFlags", wintypes.DWORD),
+                    ("time", wintypes.DWORD), ("dwExtraInfo", ULONG_PTR)]
 
 
-class _U(ctypes.Union):
-    _fields_ = [("mi", MOUSEINPUT), ("ki", KEYBDINPUT)]
+    class _U(ctypes.Union):
+        _fields_ = [("mi", MOUSEINPUT), ("ki", KEYBDINPUT)]
 
 
-class INPUT(ctypes.Structure):
-    _fields_ = [("type", wintypes.DWORD), ("u", _U)]
+    class INPUT(ctypes.Structure):
+        _fields_ = [("type", wintypes.DWORD), ("u", _U)]
 
 
-u32.SendInput.argtypes = [wintypes.UINT, ctypes.POINTER(INPUT), ctypes.c_int]
-u32.GetForegroundWindow.restype = wintypes.HWND
-u32.MonitorFromWindow.argtypes = [wintypes.HWND, wintypes.DWORD]
-u32.MonitorFromWindow.restype = wintypes.HANDLE
-u32.GetWindowRect.argtypes = [wintypes.HWND, ctypes.POINTER(wintypes.RECT)]
+    u32.SendInput.argtypes = [wintypes.UINT, ctypes.POINTER(INPUT), ctypes.c_int]
+    u32.GetForegroundWindow.restype = wintypes.HWND
+    u32.MonitorFromWindow.argtypes = [wintypes.HWND, wintypes.DWORD]
+    u32.MonitorFromWindow.restype = wintypes.HANDLE
+    u32.GetWindowRect.argtypes = [wintypes.HWND, ctypes.POINTER(wintypes.RECT)]
+else:
+    u32 = None
 
 
 def sair(msg):
@@ -109,6 +121,8 @@ def gravar_estado(e):
 
 # ---------- monitores e janelas ----------
 def monitores():
+    if not WIN:
+        return PX.monitores()
     lista = []
 
     @ctypes.WINFUNCTYPE(wintypes.BOOL, wintypes.HANDLE, wintypes.HDC, ctypes.POINTER(wintypes.RECT), wintypes.LPARAM)
@@ -121,13 +135,29 @@ def monitores():
 
 
 def titulo(h):
+    if not WIN:
+        return PX.titulo(h)
     n = u32.GetWindowTextLengthW(h)
     b = ctypes.create_unicode_buffer(n + 1)
     u32.GetWindowTextW(h, b, n + 1)
     return b.value
 
 
+def janela_id():
+    """A janela ativa agora (número no Windows, texto nos outros; 0/None se não der para saber)."""
+    return (u32.GetForegroundWindow() or 0) if WIN else PX.janela_id()
+
+
+def capturar(bbox):
+    if not WIN:
+        return PX.capturar(bbox)
+    from PIL import ImageGrab
+    return ImageGrab.grab(bbox=bbox, all_screens=True).convert("RGB")
+
+
 def janela_ativa():
+    if not WIN:
+        return PX.janela_ativa()
     h = u32.GetForegroundWindow()
     if not h:
         return "", 1
@@ -140,6 +170,8 @@ def janela_ativa():
 
 
 def listar_janelas():
+    if not WIN:
+        return PX.listar_janelas()
     achadas = []
 
     @ctypes.WINFUNCTYPE(wintypes.BOOL, wintypes.HWND, wintypes.LPARAM)
@@ -156,6 +188,8 @@ def listar_janelas():
 
 
 def focar(parte):
+    if not WIN:
+        return PX.focar(parte)
     p = parte.lower()
     for h, t in listar_janelas():
         if p in t.lower():
@@ -173,6 +207,8 @@ def focar(parte):
 
 # ---------- ver ----------
 def cursor():
+    if not WIN:
+        return PX.cursor()
     p = wintypes.POINT()
     u32.GetCursorPos(ctypes.byref(p))
     return p.x, p.y
@@ -186,7 +222,7 @@ def nome_tela(rotulo):
 
 
 def ver(num=None, grade=False, rotulo="pc"):
-    from PIL import ImageGrab, ImageDraw
+    from PIL import ImageDraw
     mons = monitores()
     tit, ativa = janela_ativa()
     est = ler_estado()
@@ -194,7 +230,7 @@ def ver(num=None, grade=False, rotulo="pc"):
         num = ativa
     num = max(1, min(len(mons), int(num)))
     l, t, r, b = mons[num - 1]["ret"]
-    img = ImageGrab.grab(bbox=(l, t, r, b), all_screens=True).convert("RGB")
+    img = capturar((l, t, r, b))
     escala = max(1.0, img.width / LARGURA_MAX)
     if escala > 1:
         img = img.resize((round(img.width / escala), round(img.height / escala)))
@@ -214,7 +250,7 @@ def ver(num=None, grade=False, rotulo="pc"):
     arq = nome_tela(rotulo)
     img.save(arq, "JPEG", quality=72)
     gravar_estado({"ret": [l, t, r, b], "escala": escala, "tela": num, "tam": [img.width, img.height],
-                   "cursor": [cx, cy], "janela": u32.GetForegroundWindow() or 0})
+                   "cursor": [cx, cy], "janela": janela_id() or 0})
     print(f'JANELA ATIVA: "{tit[:90]}" (na tela {ativa})')
     print(f"CAPTURA: {arq}")
     print(f"  imagem {img.width}x{img.height} da tela {num} de {len(mons)}; a cruz vermelha é o ponteiro do mouse"
@@ -225,14 +261,13 @@ def ver(num=None, grade=False, rotulo="pc"):
 
 
 def zoom(x, y):
-    from PIL import ImageGrab
     e = precisa_estado()
     rx, ry = real(x, y, e)
     l, t, r, b = e["ret"]
     L, A = 640, 360
     x0 = max(l, min(r - L, rx - L // 2))
     y0 = max(t, min(b - A, ry - A // 2))
-    img = ImageGrab.grab(bbox=(x0, y0, x0 + L, y0 + A), all_screens=True).convert("RGB")
+    img = capturar((x0, y0, x0 + L, y0 + A))
     arq = nome_tela("pc-zoom")
     img.save(arq, "JPEG", quality=85)
     print(f"ZOOM: {arq}")
@@ -268,7 +303,10 @@ def mesma_janela():
     """Teclado só vai para a janela que estava ativa na última captura: se o usuário trocou de janela
     no meio, o texto cairia no lugar errado (numa conversa, por exemplo)."""
     e = precisa_estado()
-    agora = u32.GetForegroundWindow() or 0
+    agora = janela_id() or 0
+    if not WIN and not agora:
+        sair("PAREI: neste computador não consigo confirmar qual janela está ativa, então não digito nada "
+             "(Linux: instale o xdotool; macOS: dê permissão de Acessibilidade ao Terminal/Python).")
     if e.get("janela") and agora != e["janela"]:
         sair(f'PAREI: a janela ativa mudou para "{titulo(agora)[:70]}" desde a última captura (o usuário pode ter clicado em outra coisa). '
              "Nada foi digitado. Rode ver, confira onde está o foco e só então continue.")
@@ -277,7 +315,7 @@ def mesma_janela():
 
 def sem_enviar(combo):
     """Enter numa conversa ou e-mail envia a mensagem: essa parte é sempre do usuário."""
-    t = titulo(u32.GetForegroundWindow() or 0)
+    t = titulo(janela_id() or 0)
     if "enter" in combo.lower() and CONVERSAS.search(t):
         sair(f'NÃO FIZ: Enter na janela "{t[:60]}" pode enviar uma mensagem. Enviar é sempre o usuário quem faz; deixe o texto pronto e avise.')
 
@@ -292,6 +330,8 @@ def rato(flags, dado=0):
 
 
 def andar(x, y, dur=0.32):
+    if not WIN:
+        return PX.andar(x, y, dur)
     x0, y0 = cursor()
     passos = 20
     for i in range(1, passos + 1):
@@ -304,6 +344,8 @@ def andar(x, y, dur=0.32):
 
 
 def clicar(x, y, direito=False, duplo=False):
+    if not WIN:
+        return PX.clicar(x, y, direito, duplo)
     andar(x, y)
     baixo, cima = (0x0008, 0x0010) if direito else (0x0002, 0x0004)
     for _ in range(2 if duplo else 1):
@@ -314,6 +356,8 @@ def clicar(x, y, direito=False, duplo=False):
 
 
 def arrastar(x1, y1, x2, y2):
+    if not WIN:
+        return PX.arrastar(x1, y1, x2, y2)
     andar(x1, y1)
     mandar(rato(0x0002))
     time.sleep(0.12)
@@ -347,6 +391,8 @@ def tecla(combo):
     nomes = [p for p in re.split(r"\s*\+\s*", combo.strip()) if p] if combo.strip() not in ("+",) else ["+"]
     if {n.lower() for n in nomes} in PROIBIDAS:
         sair("Essa combinação não é permitida.")
+    if not WIN:
+        return PX.tecla(combo, nomes)
     vks = [tecla_vk(n) for n in nomes]
     for v in vks:
         mandar(INPUT(type=1, u=_U(ki=KEYBDINPUT(v, 0, 0x0001 if v in ESTENDIDAS else 0, 0, 0))))
@@ -357,6 +403,8 @@ def tecla(combo):
 
 
 def digitar(texto):
+    if not WIN:
+        return PX.digitar(texto, janela_id())
     alvo = u32.GetForegroundWindow()
     for n, ch in enumerate(texto):
         if u32.GetForegroundWindow() != alvo:
@@ -384,21 +432,33 @@ def abrir_site(url):
         raiz = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
         sys.path.insert(0, raiz)
         import janelas
-        with open(os.path.join(raiz, "config.json"), encoding="utf-8") as f:
+        with open(os.path.join(raiz, "config.json"), encoding="utf-8-sig") as f:
             janelas.abrir_site(url, json.load(f))
     except Exception:
-        os.startfile(url)
+        _abrir_padrao(url)
+
+
+def _abrir_padrao(alvo):
+    """Abre com o programa padrão do sistema (Windows: startfile; macOS: open; Linux: xdg-open)."""
+    if WIN:
+        os.startfile(alvo)
+        return
+    sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
+    import plataforma
+    plataforma.abrir(alvo)
 
 
 def abrir(alvo):
     if re.match(r"^https?://", alvo):
         abrir_site(alvo)
     elif re.match(r"^[a-z]+://", alvo) or os.path.exists(alvo):
-        os.startfile(alvo)
+        _abrir_padrao(alvo)
     elif re.match(r"^[\w.-]+\.[a-z]{2,}(/.*)?$", alvo):
         abrir_site("https://" + alvo)
-    else:
+    elif WIN:
         subprocess.Popen(f'start "" "{alvo}"', shell=True)
+    else:
+        PX.abrir_programa(alvo)
 
 
 def opcao(args, nome, padrao=None):
@@ -426,6 +486,10 @@ def main():
         print(__doc__)
         return
     cmd, r = a[0], a[1:]
+    if not WIN:
+        motivo = PX.indisponivel()
+        if motivo:
+            sair("NÃO DÁ: " + motivo)
     livres = [x for x in r if not x.startswith("--")]
     for chave in ("--tela", "--espera"):          # o valor dessas opções não é argumento do comando
         v = opcao(r, chave)
@@ -476,9 +540,12 @@ def main():
         n = numeros(livres, 1)[0]
         if len(livres) >= 3:
             andar(*real(*numeros(livres[1:], 2), precisa_estado()))
-        for _ in range(abs(n)):
-            mandar(rato(0x0800, -120 if n > 0 else 120))
-            time.sleep(0.04)
+        if WIN:
+            for _ in range(abs(n)):
+                mandar(rato(0x0800, -120 if n > 0 else 120))
+                time.sleep(0.04)
+        else:
+            PX.rolar(n)
         feito = f"rolei {abs(n)} para {'baixo' if n > 0 else 'cima'}"
     elif cmd == "digitar":
         if not livres:

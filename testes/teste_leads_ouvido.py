@@ -98,3 +98,4 @@ for nome, a in (("chiado", ruido), ("batidas de teclado", teclado)):
     txt, dt = mede(a)
     print(f"      (sem o filtro, {nome} dava: {txt!r})")
 print("TUDO CERTO" if ok_geral else "TEM FALHA")
+sys.exit(0 if ok_geral else 1)

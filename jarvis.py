@@ -7,6 +7,8 @@ os.chdir(AQUI)
 sys.path.insert(0, AQUI)
 
 import configuracao
+import plataforma
+plataforma.garantir_path()
 import cerebro as cerebro_mod
 import janelas
 import cotas as cotas_mod
@@ -25,8 +27,9 @@ ARQ_VISUAL = os.path.join(DADOS, "visual.json")
 ARQ_AGENDA = os.path.join(DADOS, "agenda.json")
 ARQ_AJUSTES = os.path.join(DADOS, "ajustes.json")
 # extensões que a ação rápida do cérebro não executa: abre a pasta com o arquivo marcado
-EXECUTAVEIS = {".exe", ".bat", ".cmd", ".com", ".ps1", ".vbs", ".vbe", ".js", ".jse", ".wsf", ".wsh", ".msi", ".msp",
-               ".scr", ".lnk", ".url", ".reg", ".hta", ".cpl", ".jar", ".py", ".pyw"}
+# (Windows, macOS e Linux: .exe, .bat, .sh, .command, .app, .desktop, .AppImage...; fora do Windows, também arquivo marcado
+# como executável)
+EXECUTAVEIS = plataforma.EXECUTAVEIS
 
 
 def _ler_json(arq, padrao):
@@ -240,13 +243,9 @@ class Jarvis:
         log(f"acordei por {motivo}")
         self.manter_acordado(forcar=motivo in ("clique", "palmas"))
         if motivo == "palmas":
-            try:   # acende a tela se ela estiver apagada (um toque mínimo no mouse)
-                import ctypes
-                ctypes.windll.user32.mouse_event(0x0001, 0, 1, 0, 0)
-                ctypes.windll.user32.mouse_event(0x0001, 0, -1, 0, 0)
-                ctypes.windll.kernel32.SetThreadExecutionState(0x00000002)
-            except Exception:
-                pass
+            # acende a tela se ela estiver apagada (Windows: um toque mínimo no mouse; macOS: caffeinate; Linux: xset)
+            if not plataforma.acender_tela():
+                log("palmas: acender a tela não é possível neste sistema")
             self.enviar(t="frente")
         if self.estado == "dormindo":
             self.mudar_estado("ouvindo")
@@ -616,7 +615,7 @@ class Jarvis:
             self.enviar(t="painel", v=None)
         elif tipo == "parar":
             alvo = a.get("missao", "todas")
-            await self.agentes.parar(alvo if alvo == "todas" else int(alvo))
+            await self.agentes.parar(alvo)
         elif tipo == "janela":
             self.janela(a.get("modo", "mini"), a.get("canto"))
         elif tipo == "anotar":
@@ -633,13 +632,19 @@ class Jarvis:
             if alvo.startswith(("http://", "https://")):
                 janelas.abrir_site(alvo, CFG)
             elif os.path.exists(alvo):
-                if os.path.isfile(alvo) and os.path.splitext(alvo)[1].lower() in EXECUTAVEIS:
+                if (os.path.isfile(alvo) or alvo.rstrip("/\\").lower().endswith(".app")) and plataforma.executavel(alvo):
                     # abrir é para ver: programa e script não rodam por voz, a pasta abre com ele marcado
                     if not janelas.TESTE:
-                        subprocess.Popen(["explorer", "/select,", os.path.normpath(alvo)])
-                    log(f"rapida: {os.path.basename(alvo)} é executável, abri só a pasta")
+                        plataforma.revelar(alvo)
+                    log(f"rapida: {os.path.basename(alvo.rstrip('/\\\\'))} é executável, abri só a pasta")
+                elif janelas.TESTE:
+                    log(f"[teste] abriria {alvo}")
                 else:
-                    os.startfile(alvo)
+                    try:
+                        plataforma.abrir(alvo)
+                    except Exception as e:
+                        log(f"rapida: não abri {alvo}: {e}")
+                        return "Não consegui abrir isso neste computador."
             else:
                 m = self.achar_missao(alvo)      # "site das academias": é uma entrega, não um caminho
                 if not m:
@@ -811,9 +816,12 @@ class Jarvis:
     async def _tocar_sem_tela(self, caminho):
         if janelas.TESTE:       # em teste, nada toca nas caixas de som dele
             return
+        cmd = plataforma.tocar_audio_cmd(caminho)
+        if not cmd:
+            return
         try:
             p = await asyncio.create_subprocess_exec(
-                "ffplay", "-nodisp", "-autoexit", "-loglevel", "quiet", caminho, creationflags=0x08000000)
+                *cmd, stdout=asyncio.subprocess.DEVNULL, stderr=asyncio.subprocess.DEVNULL, **plataforma.sem_janela())
             await p.wait()
         except Exception:
             pass
@@ -1021,8 +1029,11 @@ class Jarvis:
                 await ws.send_str(json.dumps({"t": "aviso", "txt": erro}, ensure_ascii=False))
         elif t == "pasta":
             m = self.agentes.missoes.get(int(d.get("missao", 0)))
-            if m:
-                os.startfile(m.pasta)
+            if m and not janelas.TESTE:
+                try:
+                    plataforma.abrir(m.pasta)
+                except Exception as e:
+                    log(f"não abri a pasta da missão: {e}")
         elif t == "zerar":
             await self.cerebro.reiniciar()
             self.conversa.clear()
@@ -1035,8 +1046,8 @@ class Jarvis:
             m = None
         if not m:
             raise web.HTTPNotFound()
-        base = os.path.normpath(m.pasta)
-        alvo = os.path.normpath(os.path.join(base, req.match_info["resto"]))
+        base = os.path.realpath(m.pasta)
+        alvo = os.path.realpath(os.path.join(base, req.match_info["resto"]))
         try:
             dentro = os.path.commonpath([base, alvo]) == base
         except ValueError:      # outro disco
@@ -1067,7 +1078,7 @@ class Jarvis:
     # ---------- atualização pelo GitHub ----------
     async def _git(self, *args, tempo=60):
         p = await asyncio.create_subprocess_exec("git", *args, cwd=AQUI, stdout=asyncio.subprocess.PIPE, stderr=asyncio.subprocess.PIPE,
-                                                 creationflags=getattr(subprocess, "CREATE_NO_WINDOW", 0))
+                                                 **plataforma.sem_janela())
         try:
             out, err = await asyncio.wait_for(p.communicate(), tempo)
         except asyncio.TimeoutError:
@@ -1124,9 +1135,9 @@ class Jarvis:
         if self.mudo:
             amb["JARVIS_MUDO"] = "1"
         cmd = [sys.executable, os.path.abspath(sys.argv[0])] + sys.argv[1:]
-        espera = "import sys, time, subprocess; time.sleep(2.5); subprocess.Popen(sys.argv[2:], cwd=sys.argv[1])"
+        espera = "import sys, time, subprocess; time.sleep(2.5); subprocess.Popen(sys.argv[2:], cwd=sys.argv[1], stdin=subprocess.DEVNULL)"
         subprocess.Popen([sys.executable, "-c", espera, os.getcwd()] + cmd, env=amb, cwd=os.getcwd(),
-                         creationflags=getattr(subprocess, "DETACHED_PROCESS", 0) | getattr(subprocess, "CREATE_NO_WINDOW", 0))
+                         stdin=subprocess.DEVNULL, **plataforma.solto())
         asyncio.get_running_loop().call_later(0.5, lambda: os._exit(0))
 
     async def api_atualizacao(self, req):
@@ -1157,6 +1168,7 @@ class Jarvis:
                 return web.json_response({"ok": False, "erro": (err or out)[-300:] + dica})
             log("atualizado pelo GitHub")
             ATUALIZA.update(atras=0, novidades=[])
+            await self.cerebro.reiniciar()
             self.reiniciar_processo()
             return web.json_response({"ok": True, "saida": out[-300:], "reinicia": True})
         return web.json_response({"ok": False, "erro": "ação desconhecida"}, status=400)
@@ -1165,6 +1177,7 @@ class Jarvis:
         log("saindo a pedido")
         janelas.fechar_mini()
         await self.agentes.parar("todas")
+        await self.cerebro.reiniciar()
         self.agentes.salvar()
         asyncio.get_running_loop().call_later(0.4, lambda: os._exit(0))
         return web.json_response({"ok": True})
@@ -1183,12 +1196,21 @@ class Jarvis:
             ativas=ativas, total=len(self.agentes.missoes), mago_v=VISUAL.get("v", 0), cor_jarvis=VISUAL.get("cor_jarvis") or "", forma=VISUAL.get("forma") or "orbe", corpo=VISUAL.get("corpo") or "voxel",
             # com o painel grande em uso, a esfera some (não cobre botão); volta quando ele vai para outra janela
             # painel grande aberto (mesmo sem foco, ex.: restaurado pela barra de tarefas): só uma esfera na tela
-            painel_frente=self._painel_frente(), **janelas.estado_mini()))
+            painel_frente=await self._painel_frente(), **janelas.estado_mini()))
 
-    def _painel_frente(self):
+    async def _painel_frente(self):
+        if VISUAL.get("mini_sempre"):
+            return False
         agora = time.time()
-        if agora - self._frente[0] > 0.33:
-            self._frente = (agora, (janelas.grande_na_frente() or janelas.grande_visivel()) and not VISUAL.get("mini_sempre"))
+        ttl = 0.8 if plataforma.LINUX else 0.33
+        if agora - self._frente[0] > ttl:
+            if plataforma.LINUX:
+                # no Linux chama xdotool num fio separado para nunca travar o laço do servidor
+                laco = asyncio.get_running_loop()
+                na_frente = await laco.run_in_executor(None, janelas.grande_na_frente)
+            else:
+                na_frente = janelas.grande_na_frente() or janelas.grande_visivel()
+            self._frente = (agora, bool(na_frente))
         return self._frente[1]
 
     async def api_visual(self, req):
@@ -1310,7 +1332,8 @@ def bandeja():
             pystray.MenuItem("Fechar o Jarvis", lambda icone: (chamar("/api/sair"), icone.stop())))
         pystray.Icon("Jarvis", img, "Jarvis", menu).run()
     except Exception as e:
-        log(f"bandeja indisponível: {e}")
+        dica = " (no Linux, o ícone precisa de uma área de notificação: GNOME pede a extensão AppIndicator)" if plataforma.LINUX else ""
+        log(f"bandeja indisponível: {e}{dica}; o painel e a esfera continuam funcionando")
 
 
 @web.middleware
@@ -1330,11 +1353,33 @@ async def so_local(req, handler):
 def main():
     if "--janela" in sys.argv:
         if ja_rodando():
-            abrir_janela()
+            import urllib.request
+            try:
+                # pede ao Jarvis que já está aberto para trazer o painel (ele conhece o PID da janela no macOS/Linux)
+                urllib.request.urlopen(urllib.request.Request(
+                    f"http://127.0.0.1:{CFG['porta']}/api/janela/grande", data=b"{}", method="POST"), timeout=3)
+            except Exception:
+                janelas.abrir_grande()
             return
         import threading
-        threading.Thread(target=bandeja, daemon=True).start()
         threading.Timer(2.5, abrir_janela).start()
+        if plataforma.MAC or os.environ.get("JARVIS_BANDEJA_PRINCIPAL"):
+            # macOS: o ícone da barra de menus só funciona na thread principal; o servidor roda numa thread própria.
+            # Se o ícone não abrir (falta o pystray, por exemplo), o servidor segue normalmente sem ele.
+            fio = threading.Thread(target=servir, kwargs={"principal": False}, daemon=True)
+            fio.start()
+            if not os.environ.get("JARVIS_SEM_BANDEJA"):
+                bandeja()
+            while fio.is_alive():
+                fio.join(1)
+            return
+        if not os.environ.get("JARVIS_SEM_BANDEJA"):
+            threading.Thread(target=bandeja, daemon=True).start()
+    servir()
+
+
+def servir(principal=True):
+    """Sobe o servidor do painel. principal=False quando roda fora da thread principal (macOS com o ícone de menu)."""
     j = Jarvis()
     app = web.Application(client_max_size=4 * 1024 * 1024, middlewares=[so_local])
     app.on_startup.append(j.ao_iniciar)
@@ -1365,7 +1410,7 @@ def main():
         if "Cache-Control" not in resp.headers:
             resp.headers["Cache-Control"] = "no-cache"
     app.on_response_prepare.append(sem_cache_velho)
-    web.run_app(app, host="127.0.0.1", port=CFG["porta"], print=None, access_log=None)
+    web.run_app(app, host="127.0.0.1", port=CFG["porta"], print=None, access_log=None, handle_signals=principal)
 
 
 if __name__ == "__main__":

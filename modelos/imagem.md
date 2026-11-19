@@ -12,6 +12,6 @@ Objetivo: gerar a imagem pedida com o gerador de imagem do próprio Codex (assin
 
 1. Escreva o prompt em inglês, com formato (quadrada 1:1, salvo pedido diferente), cena, roupa, luz e o texto que deve aparecer, se houver.
 2. Se a imagem tiver uma pessoa real (por exemplo o próprio usuário), procure fotos de referência nos caminhos citados na missão. Sem referência, gere a cena sem rosto identificável e avise no resumo.
-3. Gere a imagem e salve em `entregas\imagem.png`.
+3. Gere a imagem e salve em `entregas/imagem.png`.
 4. Abra o arquivo para conferir: proporção, texto escrito certo, mãos e rosto sem defeito. Se tiver defeito claro, gere de novo uma vez.
 5. Não use serviço pago de geração de imagem.

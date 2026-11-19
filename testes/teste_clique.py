@@ -42,8 +42,10 @@ def confere(nome, cond, extra=""):
     print(("OK   " if cond else "FALHA"), nome, extra)
 
 erros = []
+sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
+_cen = __import__("_cenario")
 with sync_playwright() as p:
-    b = p.chromium.launch(channel="msedge")
+    b = _cen.abrir_navegador(p)
     pg = b.new_page(viewport={"width": 1900, "height": 1030})
     pg.on("pageerror", lambda e: erros.append(str(e)))
     pg.goto("http://127.0.0.1:4797/"); pg.wait_for_timeout(900)
@@ -69,7 +71,8 @@ with sync_playwright() as p:
     pg.mouse.click((bl["l"] + bl["r"]) / 2, bl["t"] + 30); pg.wait_for_timeout(7000); c = est()
     confere("sobe no quadro clicado", c["surf"] in ("agora", "bloco") and abs(c["y"] - bl["t"]) < 6, f"superfície {c['surf']}, y {c['y']:.0f} (topo {bl['t']:.0f})")
     pg.screenshot(path=os.path.join(D, "2_em_cima_do_quadro.png"))
-    # 4. clique no orbe: o mago não se mexe
+    # 4. clique no orbe: o mago não se mexe (congela o passeio sozinho antes de medir, para o teste não oscilar)
+    pg.evaluate("() => { MAGO.estado.modo = 'parado'; MAGO.estado.ir = null; MAGO.estado.tm = 15; }")
     o = pg.evaluate("() => orbeTela()"); antes = est()
     pg.mouse.click(o["x"], o["y"]); pg.wait_for_timeout(600); c = est()
     confere("clique no orbe não manda o mago", not c["ir"] and abs(c["x"] - antes["x"]) < 3)
@@ -92,3 +95,4 @@ with sync_playwright() as p:
     b.close()
 print("erros na página:", erros or "nenhum")
 print("TUDO CERTO" if ok and not erros else "TEM FALHA")
+sys.exit(0 if ok and not erros else 1)

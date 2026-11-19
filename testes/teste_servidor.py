@@ -24,10 +24,12 @@ def confere(nome, cond, extra=""):
 async def main():
     amb = dict(os.environ)
     amb.update(JARVIS_TESTE=PASTA, JARVIS_PORTA="4790", JARVIS_CEREBRO="claude", PYTHONIOENCODING="utf-8", FALSO_DURA="12",
-               JARVIS_LEADS=os.path.join(PASTA, "dados", "leads"))
+               JARVIS_LEADS=os.path.join(PASTA, "dados", "leads"), PYTHON=sys.executable)
     __import__("_cenario").preparar(PASTA, amb)      # um projeto e duas conversas de mentira
     FALSO = os.path.join(SAIDA, "falso")      # o Claude Code de mentira roda de uma pasta sem espaço nem "&" no caminho (o cmd não aceita)
     __import__("shutil").copytree(os.path.join(AQUI, "falso"), FALSO, dirs_exist_ok=True)
+    if sys.platform != "win32":      # macOS e Linux: o falso é o script "claude" (sem extensão)
+        os.chmod(os.path.join(FALSO, "claude"), 0o755)
     amb["PATH"] = FALSO + os.pathsep + amb["PATH"]
     exe = os.path.join(PASTA, "programa.bat")      # se a ação rápida executasse, ele criaria rodou.txt
     with open(exe, "w") as f:
@@ -219,5 +221,6 @@ async def main():
         print("".join(f.readlines()[-22:]))
     print("TUDO CERTO" if ok_geral else "TEM FALHA")
     print(PASTA)
+    sys.exit(0 if ok_geral else 1)
 
 asyncio.run(main())

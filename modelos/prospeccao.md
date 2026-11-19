@@ -13,8 +13,8 @@ Objetivo: prospectar {nicho} em {cidade}. A planilha de leads guarda tudo entre 
 Ferramentas (caminho completo nas regras acima): `navegar.py` (Google Maps, abrir site, capturas) e `leads.py` (a planilha). Leia `leads.py ajuda` antes de começar.
 
 Etapa 1 — Levantar (se etapa = proxima e a planilha já tiver empresas, pule para a Etapa 3)
-1. `navegar.py maps "{nicho} em {cidade}" --max 25 > trabalho\maps.json`
-2. `leads.py juntar "{nicho}" "{cidade}" trabalho\maps.json` (empresa que já estava na planilha não entra de novo).
+1. `navegar.py maps "{nicho} em {cidade}" --max 25 > trabalho/maps.json`
+2. `leads.py juntar "{nicho}" "{cidade}" trabalho/maps.json` (empresa que já estava na planilha não entra de novo).
 3. Marco: `MARCO: Achei N {nicho} em {cidade}.`
 Se etapa = levantar, pare aqui: vá para a Etapa 4.
 
@@ -27,15 +27,15 @@ Etapa 2 — Analisar as empresas novas
 
 Etapa 3 — Escolher e produzir ({quantos_alvos} empresa(s) nesta rodada)
 6. Escolha entre as `sem_site` e `site_fraco` que ainda não viraram `site_feito`: melhor nota, mais avaliações, mais chance de fechar. Explique a escolha em duas frases no relatório.
-7. Se ela tem site, salve o atual: `navegar.py captura <url> --saida entregas\antes.png --inteira`.
-8. Faça o site novo em `entregas\site.html`: arquivo único, responsivo, com os dados reais do negócio (nome, serviços, endereço, telefone, horário e avaliações que você leu). Não invente depoimentos, preços, registros profissionais nem números. Fotos do original só por endereço (sem baixar), ou blocos de cor no lugar.
-9. `navegar.py captura entregas\site.html --saida entregas\depois.png --inteira`.
-10. `entregas\email.md`: assunto e corpo curtos, tom de quem quer ajudar, sem pressão de venda, convidando a ver a prévia. É rascunho: não envie nada.
+7. Se ela tem site, salve o atual: `navegar.py captura <url> --saida entregas/antes.png --inteira`.
+8. Faça o site novo em `entregas/site.html`: arquivo único, responsivo, com os dados reais do negócio (nome, serviços, endereço, telefone, horário e avaliações que você leu). Não invente depoimentos, preços, registros profissionais nem números. Fotos do original só por endereço (sem baixar), ou blocos de cor no lugar.
+9. `navegar.py captura entregas/site.html --saida entregas/depois.png --inteira`.
+10. `entregas/email.md`: assunto e corpo curtos, tom de quem quer ajudar, sem pressão de venda, convidando a ver a prévia. É rascunho: não envie nada.
 11. `leads.py marcar "{nicho}" "{cidade}" "<empresa>" --situacao email_pronto --missao <número desta missão, se souber>`.
-12. Com mais de um alvo, o primeiro fica na raiz de `entregas\` e os outros em `entregas\<nome-curto>\` (site.html, depois.png, email.md).
+12. Com mais de um alvo, o primeiro fica na raiz de `entregas/` e os outros em `entregas/<nome-curto>/` (site.html, depois.png, email.md).
 13. Marco: `MARCO: Site e e-mail prontos para <empresa>.`
 
 Etapa 4 — Fechar
-14. `leads.py copiar "{nicho}" "{cidade}" --saida entregas\leads.csv`.
-15. `entregas\relatorio.md`: tabela das empresas vistas (nome, nota, avaliações, site, Instagram, situação, observação em uma linha), o alvo escolhido e por quê, e a fila das próximas.
+14. `leads.py copiar "{nicho}" "{cidade}" --saida entregas/leads.csv`.
+15. `entregas/relatorio.md`: tabela das empresas vistas (nome, nota, avaliações, site, Instagram, situação, observação em uma linha), o alvo escolhido e por quê, e a fila das próximas.
 16. No resumo final diga: quantas empresas a planilha tem, qual foi o alvo e quantas ainda estão na fila. Se sobrou fila, termine com: "Diga 'próxima' para eu seguir."

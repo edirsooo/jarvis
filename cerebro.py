@@ -2,6 +2,7 @@
 import asyncio, datetime, json, os, re, shutil
 
 import configuracao
+import plataforma
 
 AQUI = os.path.dirname(os.path.abspath(__file__))
 RAIZ = os.environ.get("JARVIS_TESTE") or AQUI
@@ -105,7 +106,7 @@ class Cerebro:
         self.proc = await configuracao.abrir_programa(
             exe, args, cwd=PASTA, env=amb, limit=8 * 1024 * 1024,
             stdin=asyncio.subprocess.PIPE, stdout=asyncio.subprocess.PIPE,
-            stderr=asyncio.subprocess.DEVNULL, creationflags=0x08000000)
+            stderr=asyncio.subprocess.DEVNULL, **plataforma.sem_janela())
         self.log("cérebro: aberto")
 
     async def aquecer(self):
@@ -160,6 +161,9 @@ class Cerebro:
                 self.log(f"cérebro: {type(e).__name__}: {e}")
                 await self._fechar()
                 erro = e
+        err_baixo = str(erro).lower()
+        if any(x in err_baixo for x in ("hit your", "weekly limit", "rate limit", "usage limit", "quota")):
+            return {"fala": "A cota do Claude acabou. Espere renovar ou ligue o cérebro local.", "acoes": [], "erro": str(erro)}
         if tentativa == 0:
             return await self.pensar(texto, 1, ao_falar)
         return {"fala": "Perdi o fio. Pode repetir?", "acoes": [], "erro": str(erro)}

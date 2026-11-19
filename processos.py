@@ -20,7 +20,7 @@ Os que vêm com o programa ficam em modelos\\. Os seus (criados ou editados na t
 que não vai para o repositório: um processo seu com o mesmo nome de um que veio pronto vale por cima dele.
 No roteiro, {dono} vira o nome de quem usa e {pasta_jarvis} a pasta onde o Jarvis está instalado.
 """
-import os, re, unicodedata
+import os, re, sys, unicodedata
 
 AQUI = os.path.dirname(os.path.abspath(__file__))
 PASTA = os.path.join(AQUI, "modelos")
@@ -147,7 +147,8 @@ def montar(ident, dados=None):
     if not p:
         return None
     vals = valores(p, dados)
-    corpo = p["corpo"].replace("{dono}", DONO).replace("{pasta_jarvis}", AQUI)
+    py = sys.executable or ("python" if os.name == "nt" else "python3")
+    corpo = p["corpo"].replace("{dono}", DONO).replace("{pasta_jarvis}", AQUI).replace("{python}", py)
     for k, v in vals.items():
         corpo = corpo.replace("{" + k + "}", v)
     cab = f"# Processo: {p['nome']}\n"
@@ -157,7 +158,7 @@ def montar(ident, dados=None):
     if falta:
         cab += "Não informado (decida pelo mais sensato a partir do pedido): " + ", ".join(falta) + "\n"
     if p["entregas"]:
-        cab += f"Entregas esperadas em entregas\\: {p['entregas']}\n"
+        cab += f"Entregas esperadas em entregas{os.sep}: {p['entregas']}\n"
     return cab + "\n" + corpo
 
 

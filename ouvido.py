@@ -25,7 +25,17 @@ def incompleta(txt):
 
 
 def _dll_cuda():
-    """A placa precisa do cublas/cudnn; o torch instalado já traz as DLLs."""
+    """A placa precisa do cublas/cudnn; o torch instalado já traz as DLLs (Windows).
+    No Linux vale a CUDA do sistema, se houver placa NVIDIA; no macOS não há CUDA: a transcrição usa o processador."""
+    import sys
+    if sys.platform == "darwin":
+        return False
+    if sys.platform != "win32":
+        try:
+            import ctranslate2
+            return ctranslate2.get_cuda_device_count() > 0
+        except Exception:
+            return False
     try:
         spec = importlib.util.find_spec("torch")
         if spec and spec.submodule_search_locations:
@@ -144,19 +154,48 @@ class Ouvido:
         self._microfone()
 
     def _microfone(self):
-        import sounddevice as sd
+        try:
+            import sounddevice as sd
+        except Exception as e:
+            self.dispositivo = "indisponível"
+            self.log(f"microfone indisponível ({e}); instale a biblioteca PortAudio ou use escrevendo no painel")
+            return
+        ult_erro, espera = "", 5
         while self.vivo:
             try:
                 dev = self.cfg.get("microfone")
                 info = sd.query_devices(dev, "input") if dev is not None else sd.query_devices(kind="input")
                 self.dispositivo = info["name"]
                 self.log(f"microfone: {self.dispositivo}")
-                with sd.InputStream(samplerate=TAXA, channels=1, dtype="float32", blocksize=BLOCO,
-                                    device=dev, callback=lambda d, f, t, s: self.fila.put(d[:, 0].copy())):
-                    self._laco()
+                ult_erro, espera = "", 5
+                try:
+                    with sd.InputStream(samplerate=TAXA, channels=1, dtype="float32", blocksize=BLOCO,
+                                        device=dev, callback=lambda d, f, t, s: self.fila.put(d[:, 0].copy())):
+                        self._laco()
+                except Exception as e1:
+                    # no macOS e no Linux alguns microfones (Bluetooth, USB, ALSA puro) não aceitam 16 kHz direto:
+                    # abre na taxa nativa do dispositivo e reamostra cada bloco para 16 kHz
+                    sr = int(round(info.get("default_samplerate") or 0))
+                    if sr and sr != TAXA:
+                        bloco_nat = max(1, int(round(BLOCO * sr / TAXA)))
+                        self.log(f"microfone: taxa nativa {sr} Hz (reamostrando para {TAXA} Hz)")
+                        def cb(d, f, t, s):
+                            x = d[:, 0]
+                            if len(x) == BLOCO:
+                                self.fila.put(x.copy())
+                            else:
+                                self.fila.put(np.interp(np.linspace(0, len(x) - 1, BLOCO), np.arange(len(x)), x).astype(np.float32))
+                        with sd.InputStream(samplerate=sr, channels=1, dtype="float32", blocksize=bloco_nat, device=dev, callback=cb):
+                            self._laco()
+                    else:
+                        raise e1
             except Exception as e:
-                self.log(f"microfone falhou ({e}); tento de novo em 5 s")
-                time.sleep(5)
+                msg = str(e)
+                if msg != ult_erro:
+                    self.log(f"microfone falhou ({msg}); tento de novo em {espera} s")
+                    ult_erro = msg
+                time.sleep(espera)
+                espera = min(60, espera * 2)
 
     # ---------- laço principal ----------
     def _laco(self):
