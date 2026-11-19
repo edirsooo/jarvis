@@ -20,3 +20,9 @@ __pycache__/
 .venv/
 venv/
 /_video_apresentacao/
+
+# site (docs/): conferências da skill de design e painéis de entrega
+docs/.taste-skill/
+.taste-skill/
+_painéis/
+docs/_painéis/

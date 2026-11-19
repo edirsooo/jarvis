@@ -4,15 +4,20 @@ Assistente de voz para Windows que conversa com você e põe o **Claude Code** e
 
 Você fala "Jarvis, ...". Ele responde em voz alta, numa frase, abre uma missão para um dos agentes e mostra na tela, ao vivo, o que cada um está fazendo e o que ficou pronto.
 
-![Painel do Jarvis com uma missão rodando](docs/missao-rodando.png)
+![Painel do Jarvis: o fantasminha em Voxel brilhante fala numa caixa de diálogo e o pedido vai pela barra de chat](imagens/painel.png)
 
 - **Voz:** acorda pelo nome, transcreve no seu computador (Whisper) e fala com a voz do Edge.
 - **Missões:** cada pedido vira uma missão do Claude Code ou do Codex, numa pasta própria, com as entregas (site, imagem, relatório, vídeo) abertas no painel.
 - **Ajuste no meio:** "na 14, é Valinhos, não Campinas" corrige a missão enquanto ela roda.
 - **Processos:** roteiros prontos para o que se repete (prospecção, site, pesquisa de mercado, programar num projeto). Dá para criar e editar os seus na tela ou por voz.
 - **Projetos e conversas:** "na loja, corrige o botão" trabalha dentro da pasta do projeto; "na conversa 7, pede para continuar" retoma uma conversa do Claude Code.
-- **Esfera flutuante:** com o painel minimizado, uma esfera pequena fica por cima das outras janelas mostrando o que ele está fazendo.
+- **Chat de jogo:** a resposta dele aparece numa caixa de diálogo que se escreve letra a letra, e o pedido por texto vai numa barra fina de chat.
+- **Do seu jeito:** 5 formas (orbe, fantasminha, bola de fogo, entidade elétrica, espírito dourado), 5 estilos de corpo, qualquer cor, cenários, temas e um personagem que você monta.
+- **Esfera flutuante:** com o painel minimizado, uma esfera pequena fica por cima das outras janelas mostrando o que ele está fazendo, na mesma forma e com o mesmo personagem do painel.
+- **Atualiza sozinho:** avisa quando sai versão nova no GitHub e atualiza com um clique.
 - **Cérebro local de reserva (opcional):** com o Ollama instalado, ele continua conversando quando a cota do Claude acaba.
+
+![As cinco formas do Jarvis no estilo Voxel brilhante](imagens/formas.jpg)
 
 ![Aba de processos](docs/processos.png)
 
@@ -103,9 +108,16 @@ Opções úteis do `config.json`:
 
 A personalidade (um espírito de poucas palavras que vive no orbe) está em `personalidade.md`.
 
-O botão **✦ Aparência** troca a forma do Jarvis (orbe de cubos, fantasminha, bola de fogo, entidade elétrica, espírito dourado), o cenário do palco (ruínas ao luar, masmorra, floresta sombria, torre arcana), a classe do mago (mago, sábio, arcanista, aprendiz, cavaleiro, patrulheiro, necromante) e o tema da tela. Para criar um cenário novo, basta uma entrada em `CENAS` (`web\cenario.js`); uma forma nova, em `FORMAS` e `formaPonto` (`web\app.js`); uma classe nova, em `R` (`web\mago.js`).
+O botão **✦ Aparência** troca a forma do Jarvis (orbe de cubos, fantasminha, bola de fogo, entidade elétrica, espírito dourado), o cenário do palco (ruínas ao luar, masmorra, floresta sombria, torre arcana), o personagem que anda pelo palco e o tema da tela. Para criar um cenário novo, basta uma entrada em `CENAS` (`web\cenario.js`); uma forma nova, em `FORMAS` e `formaPonto` (`web\app.js`); uma classe nova, em `R` (`web\mago.js`).
 
-O menu tem três abas. Em **Jarvis** ficam a forma, o estilo do corpo (cubos 3D, pixel leve, luz suave ou bolhas macias), a cor e a esfera flutuante. Em **Mago** ficam a classe e o tamanho. Em **Tela** ficam o tema, a cor de destaque, o cenário e a versão. O fantasminha e a bola de fogo têm rosto: os olhos seguem o mouse e piscam, ele sorri quando o mouse passa por cima e mexe a boca quando fala. Se o computador estiver pesado, use o estilo **Pixel leve**, que é o mais leve.
+O menu tem três abas:
+- **Jarvis:** a forma, o estilo do corpo (**Voxel brilhante**, o padrão, um volume de cubinhos de luz; ou cubos 3D, pixel leve, luz suave, bolhas macias), a cor e a esfera flutuante.
+- **Personagem:** a classe (mago da torre, sábio, arcanista, aprendiz, cavaleiro, patrulheiro, necromante), homem ou mulher, a pele, o cabelo e a cor dele, a barba, a cor da roupa e o tamanho.
+- **Tela:** o tema, a cor de destaque, o cenário e a versão.
+
+O fantasminha e a bola de fogo têm rosto: os olhos seguem o mouse e piscam, ele sorri quando o mouse passa por cima e mexe a boca quando fala. Se o computador estiver pesado, use o estilo **Pixel leve**, que é o mais leve.
+
+<p><img src="imagens/aparencia.png" alt="Menu Aparência, aba Jarvis" width="49%"> <img src="imagens/personagem.png" alt="Menu Aparência, aba Personagem" width="49%"></p>
 
 ### Atualizar
 
