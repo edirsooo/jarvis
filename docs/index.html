@@ -1,0 +1,268 @@
+<!doctype html>
+<html lang="pt-BR" data-type="software" data-radius="soft" data-buttons="solid" data-motion>
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Jarvis: assistente de voz grátis para Claude Code e Codex no Windows, macOS e Linux</title>
+<meta name="description" content="Jarvis é um assistente de voz grátis e de código aberto para Windows, macOS e Linux: você fala, ele abre missões no Claude Code ou no Codex e mostra o trabalho ao vivo. Usa as suas assinaturas, sem servidor nem conta.">
+<meta name="robots" content="index, follow, max-image-preview:large">
+<meta name="author" content="Prestes Design">
+<link rel="canonical" href="https://jarvis.prestesdesign.com.br/">
+<meta name="page-type" content="software">
+<meta name="site-kind" content="software">
+<meta name="theme-color" content="#0a0f1f">
+<meta property="og:type" content="website">
+<meta property="og:locale" content="pt_BR">
+<meta property="og:site_name" content="Jarvis">
+<meta property="og:url" content="https://jarvis.prestesdesign.com.br/">
+<meta property="og:title" content="Jarvis: fale com o Claude Code e o Codex pela voz">
+<meta property="og:description" content="Assistente de voz grátis e de código aberto para Windows, macOS e Linux. Cada pedido vira uma missão que você acompanha ao vivo.">
+<meta property="og:image" content="https://jarvis.prestesdesign.com.br/share.jpg">
+<meta property="og:image:secure_url" content="https://jarvis.prestesdesign.com.br/share.jpg">
+<meta property="og:image:type" content="image/jpeg">
+<meta property="og:image:width" content="1200">
+<meta property="og:image:height" content="630">
+<meta property="og:image:alt" content="O Jarvis em forma de bola de fogo de cubos sobre ruínas ao luar, com os magos voxel no chão">
+<meta name="twitter:card" content="summary_large_image">
+<meta name="twitter:title" content="Jarvis: fale com o Claude Code e o Codex pela voz">
+<meta name="twitter:description" content="Assistente de voz grátis e de código aberto para Windows, macOS e Linux. Cada pedido vira uma missão que você acompanha ao vivo.">
+<meta name="twitter:image" content="https://jarvis.prestesdesign.com.br/share.jpg">
+<link rel="icon" type="image/png" href="site/icone.png">
+<link rel="apple-touch-icon" href="site/icone.png">
+<script type="application/ld+json">
+{"@context":"https://schema.org","@graph":[
+ {"@type":"SoftwareApplication","name":"Jarvis","url":"https://jarvis.prestesdesign.com.br/",
+  "description":"Assistente de voz grátis e de código aberto para Windows, macOS e Linux que conversa com você e põe o Claude Code e o Codex para trabalhar no seu computador, com missões acompanhadas ao vivo no painel.",
+  "applicationCategory":"UtilitiesApplication","applicationSubCategory":"Assistente de voz","operatingSystem":"Windows 10, Windows 11, macOS 12+, Linux",
+  "inLanguage":"pt-BR","isAccessibleForFree":true,"license":"https://opensource.org/licenses/MIT",
+  "softwareRequirements":"Python 3.10 ou mais novo; Claude Code instalado e com a sua conta",
+  "downloadUrl":"https://github.com/edirsooo/jarvis/archive/refs/heads/main.zip","installUrl":"https://jarvis.prestesdesign.com.br/#baixar","codeRepository":"https://github.com/edirsooo/jarvis",
+  "image":"https://jarvis.prestesdesign.com.br/share.jpg","screenshot":["https://jarvis.prestesdesign.com.br/site/telas/missao-rodando.webp","https://jarvis.prestesdesign.com.br/site/telas/processos.webp"],
+  "featureList":["Acorda pelo nome e transcreve a voz no próprio computador (Whisper)","Cada pedido vira uma missão do Claude Code ou do Codex","Painel com o trabalho de cada agente ao vivo e as entregas","Ajuste de uma missão enquanto ela roda","Processos prontos e os seus, criados por voz","Cinco formas, cinco estilos de corpo, cores, personagens, cenários e temas","Atualização pelo GitHub com um clique"],
+  "offers":{"@type":"Offer","price":"0","priceCurrency":"BRL"},
+  "author":{"@type":"Organization","name":"Prestes Design","url":"https://prestesdesign.com.br"}},
+ {"@type":"VideoObject","name":"Jarvis: apresentação","description":"Conheça as missões por voz, os processos, a agenda, a aparência e a atualização do Jarvis.","thumbnailUrl":"https://jarvis.prestesdesign.com.br/site/video/jarvis-apresentacao.jpg","contentUrl":"https://jarvis.prestesdesign.com.br/site/video/jarvis-apresentacao.mp4","uploadDate":"2026-11-19","duration":"PT1M37S","inLanguage":"pt-BR"},
+ {"@type":"WebSite","name":"Jarvis","url":"https://jarvis.prestesdesign.com.br/","inLanguage":"pt-BR","publisher":{"@type":"Organization","name":"Prestes Design","url":"https://prestesdesign.com.br"}}
+]}
+</script>
+<link rel="preload" href="site/fonts/HostGrotesk.woff2" as="font" type="font/woff2" crossorigin>
+<link rel="preload" href="site/fonts/Cinzel.woff2" as="font" type="font/woff2" crossorigin>
+<link rel="stylesheet" href="assets/motion/motion.css">
+<link rel="stylesheet" href="site/site.css?v=20261119a">
+<script>document.documentElement.classList.add('m-enter');setTimeout(()=>document.documentElement.classList.add('m-enter-done'),700)</script>
+</head>
+<body>
+<!-- kind: software (assistente de voz para Windows, grátis). deal: hero centred; palette: a do app (tema Abismo: ouro e brasa
+     sobre azul-noite), no lugar da dealt green-black-bone, a pedido do cliente; type: host (Host Grotesk + JetBrains Mono)
+     com Cinzel na marca, como no app; nav-centre, footer-statement, close-type, dark-band, solid, wordmark;
+     sem momento sorteado e sem transição entre seções (pedido do dono, 19/11): no lugar, os personagens vivem sozinhos na tela. -->
+<header class="nav topo" id="topo">
+  <div class="wrap topo-in">
+    <a class="pular" href="#voz">Pular para o conteúdo</a>
+    <a class="marca" href="#inicio" aria-label="Jarvis, início"><span class="cubo" aria-hidden="true"></span><b>Jarvis</b></a>
+    <nav class="menu" id="menu" aria-label="Seções">
+      <a href="#voz">Voz</a><a href="#missoes">Missões</a><a href="#aparencia">Aparência</a><a href="#atualizacao">Atualização</a><a href="#video">Vídeo</a>
+    </nav>
+    <div class="som-box"><button class="som" type="button" aria-pressed="false" aria-label="Tocar a música" title="Tocar a música"><span aria-hidden="true">♪</span></button><label class="vol-r" for="vol">Volume</label><input class="vol" id="vol" type="range" min="0" max="100" value="35" aria-label="Volume da música"></div>
+    <button class="pausa" type="button" aria-pressed="false" aria-label="Pausar animações" title="Pausar animações"><span aria-hidden="true">❚❚</span></button>
+    <a class="btn btn--primary topo-baixar" href="#baixar">Baixar o Jarvis</a>
+    <button class="menu-bt" type="button" aria-expanded="false" aria-controls="menu" aria-label="Abrir o menu"><span></span><span></span></button>
+  </div>
+</header>
+
+
+<main>
+  <!-- Abertura: o Jarvis em bola de fogo sobre as ruínas ao luar (o cenário do app) e os sete magos no chão -->
+  <section class="hero" id="inicio" data-enter data-faixa="game-loop" data-palco="torre,grimorio,cristal,rpg,cavaleiro,patrulheiro,necro" data-fila="v" aria-labelledby="h-hero">
+    <canvas class="hero__bg orbe-cv" data-cenario-fundo="ruinas" data-forma="chama" data-estado="ouvindo" data-ox=".5" data-oy=".66" data-or=".135" aria-hidden="true"></canvas>
+    <div class="wrap hero-in"><div class="hero-text">
+      <p class="selo"><span class="cubo" aria-hidden="true"></span>Grátis e de código aberto · Windows, macOS e Linux</p>
+      <h1 id="h-hero">Jarvis, o assistente de voz para o Claude Code e o Codex</h1>
+      <p class="lead">Diga “Jarvis” e faça o pedido. Ele responde em voz alta, abre uma missão no Claude Code ou no Codex e mostra na tela o que cada um está fazendo.</p>
+      <div class="acoes">
+        <a class="btn btn--primary btn--xl" href="#baixar">Baixar o Jarvis</a>
+        <a class="btn btn--secondary btn--xl" href="#video">Ver o vídeo</a>
+      </div>
+    </div></div>
+  </section>
+
+  <!-- 1 Voz · orbe de cubos ouvindo, pensando e falando · mago Sábio -->
+  <section class="secao" id="voz" data-palco="grimorio" data-faixa="arcade-rush" data-parte="1" data-nome="Voz" data-sub="Acorda pelo nome · responde em voz alta" data-forma="orbe" style="--cor:#8fc7d8" aria-labelledby="h-voz">
+    <div class="wrap grade">
+      <div class="texto">
+        <h2 id="h-voz">Um assistente que acorda pelo nome</h2>
+        <p class="lead">O Whisper transcreve a sua fala no próprio computador e a resposta vem em uma frase, na voz do Edge. Depois de responder, ele segue ouvindo por alguns segundos.</p>
+        <ul class="falas">
+          <li><b>“Claude, …”</b><span>vai para o Claude Code</span></li>
+          <li><b>“Codex, …”</b><span>vai para o Codex</span></li>
+          <li><b>“Para tudo”</b><span>interrompe as missões</span></li>
+          <li><b><kbd>Espaço</kbd></b><span>liga e desliga o microfone</span></li>
+        </ul>
+      </div>
+      <figure class="janela palco-app" data-ui data-piso>
+        <div class="janela-barra" aria-hidden="true"><span class="cubo"></span><b>Jarvis</b><i>Painel</i></div>
+        <div class="palco-tela">
+          <canvas class="orbe-cv" data-forma="orbe" data-estado="ouvindo" data-ox=".5" data-oy=".42" data-or=".27" data-anel="1" data-ciclo="voz" aria-hidden="true"></canvas>
+          <button class="pausa-palco" type="button" aria-pressed="false" aria-label="Pausar a demonstração"><span aria-hidden="true">❚❚</span></button>
+        </div>
+        <div class="rotulo" aria-live="off">
+          <p class="estado-txt">✦ Ouvindo ✦</p>
+          <p class="legenda-txt"></p>
+          <p class="voce-txt"><b>você</b><span>Jarvis, faz a prospecção de academias em Valinhos.</span></p>
+        </div>
+      </figure>
+    </div>
+  </section>
+
+  <!-- 2 Missões · entidade elétrica trabalhando · Cavaleiro -->
+  <section class="secao par" id="missoes" data-palco="cavaleiro" data-faixa="boss-battle-groove" data-parte="2" data-nome="Missões" data-sub="Claude Code e Codex trabalhando ao vivo" data-forma="eletrica" style="--cor:#7fbf6a" aria-labelledby="h-missoes">
+    <div class="wrap grade">
+      <div class="texto">
+        <h2 id="h-missoes">Missões do Claude Code e do Codex, ao vivo no painel</h2>
+        <p class="lead">Cada pedido vira uma missão com pasta própria. O painel mostra o que cada agente está fazendo e abre o que ficou pronto: site, imagem, planilha, relatório.</p>
+        <p class="agentes"><span><img class="ic" src="assets/icons/claude-code.svg" alt="" width="26" height="16">Claude Code</span><span><img class="ic ic-tile" src="assets/icons/openai.svg" alt="" width="22" height="22">Codex</span></p>
+        <ul class="cartoes" data-ui>
+          <li class="cartao"><b>Corrige a missão no meio</b><span>“Na 14, é Valinhos, não Campinas.”</span></li>
+          <li class="cartao"><b>Roda processos prontos</b><span>Prospecção, site, pesquisa de mercado e os seus.</span></li>
+          <li class="cartao"><b>Trabalha nos seus projetos</b><span>“Na loja, corrige o botão.”</span></li>
+        </ul>
+      </div>
+      <figure class="janela tela-real" data-ui data-piso>
+        <div class="janela-barra"><span class="cubo" aria-hidden="true"></span><b>Jarvis</b>
+          <div class="abas" role="tablist" aria-label="Telas de missões">
+            <button role="tab" type="button" data-tela="missao-rodando" aria-selected="true">Missão rodando</button>
+            <button role="tab" type="button" data-tela="processos" aria-selected="false">Processos</button>
+          </div>
+        </div>
+        <div id="missoes-tela" role="tabpanel">
+        <img src="site/telas/missao-rodando.webp?v=20261119b" width="1900" height="1030" alt="Painel do Jarvis no tema Abismo com a missão 1, Prospecção de academias em Valinhos, rodando no Claude Code" loading="lazy" decoding="async">
+        </div>
+      </figure>
+    </div>
+  </section>
+
+  <!-- 3 Aparência · tudo trocável aqui mesmo: forma, corpo, cor, mago e cenário -->
+  <section class="secao" id="aparencia" data-faixa="bossa-em-16-bit" data-parte="3" data-nome="Aparência" data-sub="Formas · corpos · cores · magos · cenários" data-forma="fantasma" style="--cor:#c9a35a" aria-labelledby="h-aparencia">
+    <div class="wrap grade grade--meio">
+      <div class="texto">
+        <h2 id="h-aparencia">Cinco formas do Jarvis, cinco corpos e qualquer cor</h2>
+        <p class="lead">No menu Aparência você troca a forma, o corpo, a cor, o personagem, o cenário e o tema. O personagem pode ser mulher ou homem, com pele, cabelo, barba e roupa à sua escolha.</p>
+        <div class="escolhas">
+          <div class="grupo" role="group" aria-label="Forma"><span class="g-nome">Forma</span>
+            <button type="button" data-forma="orbe">Orbe de cubos</button><button type="button" data-forma="fantasma" aria-pressed="true">Fantasminha</button><button type="button" data-forma="chama">Bola de fogo</button><button type="button" data-forma="eletrica">Entidade elétrica</button><button type="button" data-forma="espirito">Espírito dourado</button>
+          </div>
+          <div class="grupo" role="group" aria-label="Estilo do corpo"><span class="g-nome">Corpo</span>
+            <button type="button" data-corpo="voxel" aria-pressed="true">Voxel brilhante</button><button type="button" data-corpo="cubos">Cubos 3D</button><button type="button" data-corpo="pixel">Pixel leve</button><button type="button" data-corpo="luz">Luz suave</button><button type="button" data-corpo="liso">Bolhas macias</button>
+          </div>
+          <div class="grupo cores" role="group" aria-label="Cor"><span class="g-nome">Cor</span>
+            <button type="button" data-cor="" aria-pressed="true" aria-label="Automática" title="Automática" style="--c:conic-gradient(#5ad7ff 0 25%,#ffd23f 0 50%,#ff6b1a 0 75%,#19c37d 0)"></button><button type="button" data-cor="#c9a35a" aria-label="Ouro" title="Ouro" style="--c:#c9a35a"></button><button type="button" data-cor="#ff6b1a" aria-label="Brasa" title="Brasa" style="--c:#ff6b1a"></button><button type="button" data-cor="#d0574a" aria-label="Sangue" title="Sangue" style="--c:#d0574a"></button><button type="button" data-cor="#58c48d" aria-label="Esmeralda" title="Esmeralda" style="--c:#58c48d"></button><button type="button" data-cor="#5ad7ff" aria-label="Gelo" title="Gelo" style="--c:#5ad7ff"></button><button type="button" data-cor="#9a7bff" aria-label="Arcano" title="Arcano" style="--c:#9a7bff"></button><button type="button" data-cor="#ff7ac8" aria-label="Rosa" title="Rosa" style="--c:#ff7ac8"></button>
+          </div>
+          <div class="grupo magos" role="group" aria-label="Personagem"><span class="g-nome">Personagem</span></div>
+          <div class="grupo" role="group" aria-label="Visual do personagem"><span class="g-nome">Visual</span>
+            <button type="button" data-visual="0" aria-pressed="true">Mulher, cabelo longo</button><button type="button" data-visual="1">Homem, barba curta</button><button type="button" data-visual="2">Mulher, cacheado</button>
+          </div>
+          <div class="grupo" role="group" aria-label="Cenário"><span class="g-nome">Cenário</span>
+            <button type="button" data-cenario="ruinas" aria-pressed="true">Ruínas ao luar</button><button type="button" data-cenario="masmorra">Masmorra</button><button type="button" data-cenario="floresta">Floresta sombria</button><button type="button" data-cenario="torre">Torre arcana</button>
+          </div>
+        </div>
+      </div>
+      <figure class="janela palco-vivo" data-ui data-piso>
+        <canvas class="cena-cv" data-cenario="ruinas" aria-hidden="true"></canvas>
+        <canvas class="orbe-cv" data-forma="fantasma" data-estado="ouvindo" data-ox=".5" data-oy=".4" data-or=".26" data-escolha="1" aria-hidden="true"></canvas>
+        <canvas class="mago-cv" data-classe="torre" aria-hidden="true"></canvas>
+        <p class="estado-txt" aria-hidden="true">✦ Ouvindo ✦</p>
+        <button class="pausa-palco" type="button" aria-pressed="false" aria-label="Pausar o palco"><span aria-hidden="true">❚❚</span></button>
+      </figure>
+    </div>
+  </section>
+
+  <!-- 4 Atualização · espírito dourado · Patrulheiro -->
+  <section class="secao par" id="atualizacao" data-palco="patrulheiro" data-faixa="open-field-at-sunrise" data-parte="4" data-nome="Atualização" data-sub="Uma versão nova, um clique" data-forma="espirito" style="--cor:#e8c46a" aria-labelledby="h-atualizacao">
+    <div class="wrap grade">
+      <div class="texto">
+        <h2 id="h-atualizacao">O Jarvis se atualiza pelo GitHub com um clique</h2>
+        <p class="lead">A cada 6 horas o Jarvis confere se saiu versão nova. Aparece o botão Atualizar com a lista de novidades; ele baixa, reinicia sozinho e, se estava calado, volta calado.</p>
+        <p class="nota">Vale para a cópia clonada pelo git. Com missão rodando, ele espera terminar.</p>
+      </div>
+      <figure class="janela dialogo-app" data-ui data-piso>
+        <div class="janela-barra" aria-hidden="true"><span class="cubo"></span><b>Jarvis</b><i class="atu-bt">⬆ Atualizar (3)</i></div>
+        <div class="dlg-corpo">
+          <canvas class="orbe-cv" data-forma="espirito" data-estado="ouvindo" data-ox=".5" data-oy=".5" data-or=".36" aria-hidden="true"></canvas>
+          <div class="dlg">
+            <p class="dlg-cab"><b>Atualização</b><span>Você está na versão c64077d</span></p>
+            <p>Tem <b>3 novidades</b> no GitHub:</p>
+            <ul>
+              <li>Suporte completo a Windows, macOS e Linux, com instalador e lançadores próprios</li>
+              <li>Personagem personalizável, chat de jogo e esfera flutuante nas cinco formas</li>
+              <li>Corpo Voxel brilhante, cenários no palco e atualização pelo GitHub com um clique</li>
+            </ul>
+            <div class="dlg-botoes"><button type="button" class="btn btn--primary" data-atualiza>Atualizar agora</button><a class="btn btn--secondary" href="https://github.com/edirsooo/jarvis/commits/main">Ver as mudanças</a></div>
+            <p class="dlg-msg" aria-live="polite"></p>
+          </div>
+        </div>
+      </figure>
+    </div>
+  </section>
+
+  <!-- 5 Vídeo · apresentação do Jarvis; a música do site sai aqui -->
+  <section class="secao assista" id="video" data-faixa="" data-palco="rpg" aria-labelledby="h-video">
+    <div class="wrap grade">
+      <div class="texto">
+        <h2 id="h-video">Veja o Jarvis em vídeo</h2>
+        <p class="lead">Em 1min37: você chama pelo nome, ele abre a missão e mostra ao vivo o que o Claude Code e o Codex estão fazendo. Processos prontos, agenda por voz, aparência do seu jeito e atualização com um clique.</p>
+      </div>
+      <div class="tela-video" id="video-tela" data-v="deitado">
+        <video controls playsinline preload="metadata" poster="site/video/jarvis-apresentacao.jpg" width="1920" height="1080" aria-label="Vídeo de apresentação do Jarvis, 1 minuto e 37 segundos">
+          <source src="site/video/jarvis-apresentacao.mp4" type="video/mp4">
+        </video>
+      </div>
+    </div>
+  </section>
+
+</main>
+
+<!-- Final e rodapé numa tela só: baixar e instalar; o orbe dourado na torre arcana e os magos comemorando -->
+<footer class="closing" id="baixar" data-palco="torre,grimorio,cristal,rpg,cavaleiro,patrulheiro,necro" data-chao=".rodape-in" data-faixa="game-loop" data-parte="5" data-nome="Baixar" data-sub="Grátis · código aberto · Windows, macOS e Linux" data-forma="orbe" data-cor-orbe="#c9a35a" style="--cor:#e0a24a" aria-labelledby="h-baixar">
+  <div class="wrap">
+    <div class="grade">
+        <div class="texto">
+          <h2 id="h-baixar">Instale o Jarvis pelo Claude Code</h2>
+          <p class="lead">Funciona no Windows (10 e 11), macOS (12+) e Linux. Precisa de Python 3.10 ou mais novo e do Claude Code com a sua conta.</p>
+          <div class="passo">
+            <p class="p-nome">No Claude Code ou no Codex, cole:</p>
+            <div class="codigo" data-ui><pre id="cmd-ia">Instale o Jarvis deste repositório: https://github.com/edirsooo/jarvis
+Clone numa pasta chamada Jarvis, leia o INSTALAR.md e siga o passo a passo de instalação. Meu nome é &lt;seu nome&gt;.</pre><button class="copiar" type="button" data-copia="cmd-ia" aria-label="Copiar o pedido de instalação">Copiar</button></div>
+          </div>
+          <div class="passo">
+            <p class="p-nome">Ou no terminal (no macOS e no Linux, use python3):</p>
+            <div class="codigo" data-ui><pre id="cmd-git">git clone https://github.com/edirsooo/jarvis.git Jarvis
+cd Jarvis
+python instalar.py</pre><button class="copiar" type="button" data-copia="cmd-git" aria-label="Copiar os comandos do terminal">Copiar</button></div>
+          </div>
+          <div class="acoes">
+            <a class="btn btn--primary btn--xl" id="btnBaixar" href="https://github.com/edirsooo/jarvis/archive/refs/heads/main.zip">Baixar o Jarvis</a>
+            <a class="btn btn--secondary btn--xl" href="https://github.com/edirsooo/jarvis"><img class="ic ic-tile" src="assets/icons/github.svg" alt="" width="18" height="18">Ver no GitHub</a>
+          </div>
+          <p class="nota">As missões agem no computador sem pedir confirmação e gastam a cota das suas assinaturas. <a class="link" href="https://github.com/edirsooo/jarvis#seguran%C3%A7a-e-privacidade">Leia sobre segurança</a></p>
+        </div>
+        <figure class="janela palco-final" data-ui>
+          <canvas class="cena-cv" data-cenario="torre" aria-hidden="true"></canvas>
+          <canvas class="orbe-cv" data-forma="orbe" data-estado="ouvindo" data-ox=".5" data-oy=".42" data-or=".27" aria-hidden="true"></canvas>
+          <button class="pausa-palco" type="button" aria-pressed="false" aria-label="Pausar o palco"><span aria-hidden="true">❚❚</span></button>
+        </figure>
+    </div>
+    <div class="rodape-in">
+      <p class="rodape-links"><a href="https://github.com/edirsooo/jarvis/blob/main/LICENSE">Licença MIT</a><a href="https://github.com/edirsooo/jarvis#seguran%C3%A7a-e-privacidade">Segurança e privacidade</a><a href="https://prestesdesign.com.br">Feito por Prestes Design</a></p>
+      <p class="rodape-legal">Nomes e logos são marcas dos seus donos. Sem ligação com a Marvel.</p>
+    </div>
+  </div>
+</footer>
+
+<script src="site/orbe.js?v=20261119a" defer></script>
+<script src="site/cenario.js?v=20261119a" defer></script>
+<script src="site/magos-voxel.js?v=20261119a" defer></script>
+<script src="site/magos.js?v=20261119a" defer></script>
+<script src="site/site.js?v=20261119b" defer></script>
+<script type="module" src="assets/motion/motion.js"></script>
+</body>
+</html>
